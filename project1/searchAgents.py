@@ -261,33 +261,34 @@ class CornersProblem(search.SearchProblem):
   This search problem finds paths through all four corners of a layout.
 
   You must select a suitable state space and successor function
+  
+  Rafi: Here is our encoding.  Tuple of current position and  corners left ot go to
   """
   
   def __init__(self, startingGameState):
     """
     Stores the walls, pacman's starting position and corners.
     """
+    print "Rafi init"
     self.walls = startingGameState.getWalls()
     self.startingPosition = startingGameState.getPacmanPosition()
     top, right = self.walls.height-2, self.walls.width-2 
     self.corners = ((1,1), (1,top), (right, 1), (right, top))
+    self.cornersremaining = set(self.corners)
     for corner in self.corners:
       if not startingGameState.hasFood(*corner):
         print 'Warning: no food in corner ' + str(corner)
+      else:
+        self.cornersremaining.add(corner)
     self._expanded = 0 # Number of search nodes expanded
-    
-    "*** YOUR CODE HERE ***"
     
   def getStartState(self):
     "Returns the start state (in your state space, not the full Pacman state space)"
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return (self.startingPosition, self.cornersremaining)
     
   def isGoalState(self, state):
     "Returns whether this search state is a goal state of the problem"
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-       
+    return len(state[1])==0   
   def getSuccessors(self, state):
     """
     Returns successor states, the actions they require, and a cost of 1.
@@ -299,17 +300,21 @@ class CornersProblem(search.SearchProblem):
      required to get there, and 'stepCost' is the incremental 
      cost of expanding to that successor
     """
-    
+    import copy 
     successors = []
     for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
       # Add a successor state to the successor list if the action is legal
       # Here's a code snippet for figuring out whether a new position hits a wall:
-      #   x,y = currentPosition
-      #   dx, dy = Actions.directionToVector(action)
-      #   nextx, nexty = int(x + dx), int(y + dy)
-      #   hitsWall = self.walls[nextx][nexty]
-      
-      "*** YOUR CODE HERE ***"
+      x,y = state[0]
+      dx, dy = Actions.directionToVector(action)
+      nextx, nexty = int(x + dx), int(y + dy)
+      hitsWall = self.walls[nextx][nexty]
+      if hitsWall:
+        continue
+      setofremainingcorners = copy.copy(state[1])
+      if (nextx, nexty) in setofremainingcorners:
+        setofremainingcorners.remove((nextx, nexty))
+      successors.append((((nextx, nexty), setofremainingcorners),action,1)) 
       
     self._expanded += 1
     return successors

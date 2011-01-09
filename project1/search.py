@@ -101,28 +101,28 @@ def breadthFirstSearch(problem):
 def greedySearch(problem, frontier):
   import copy
   frontier.push((problem.getStartState(), 0))
-  visitedstates = {problem.getStartState() : (0, [])}
+  visitedstates = {str(problem.getStartState()) : (0, [])}
   endState = None
   endStateFound= False
   while not endStateFound and not frontier.isEmpty():
     currstate = frontier.pop()[0]
-    currstatehistory = visitedstates[currstate]
+    currstatehistory = visitedstates[str(currstate)]
     currstatecost = currstatehistory[0]
     currstatepath = currstatehistory[1]
     newoptions = problem.getSuccessors(currstate)
     for option in newoptions:
-      if option[0] not in visitedstates:
+      if str(option[0]) not in visitedstates:
         newpath = copy.copy(currstatepath)
         newpath.append(option[1])
         newstatehistory = (currstatecost+option[2], newpath)
-        visitedstates[option[0]] = newstatehistory
+        visitedstates[str(option[0])] = newstatehistory
         frontier.push((option[0], currstatecost+option[2]))
         if problem.isGoalState(option[0]):
           endStateFound=True
           endState=option[0]
           break
   if endStateFound:
-    return visitedstates[endState][1] 
+    return visitedstates[str(endState)][1] 
   else:
     return []
 

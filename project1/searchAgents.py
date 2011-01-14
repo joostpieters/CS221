@@ -265,30 +265,32 @@ class CornersProblem(search.SearchProblem):
   Rafi: Here is our encoding.  Tuple of current position and  corners left ot go to
   """
   
-  def __init__(self, startingGameState):
+  def __init__(self, startingGameState, costFn = lambda x: 1):
     """
     Stores the walls, pacman's starting position and corners.
     """
-    print "Rafi init"
     self.walls = startingGameState.getWalls()
     self.startingPosition = startingGameState.getPacmanPosition()
     top, right = self.walls.height-2, self.walls.width-2 
     self.corners = ((1,1), (1,top), (right, 1), (right, top))
-    self.cornersremaining = set(self.corners)
+    self.costFn = costFn
     for corner in self.corners:
       if not startingGameState.hasFood(*corner):
         print 'Warning: no food in corner ' + str(corner)
-      else:
-        self.cornersremaining.add(corner)
     self._expanded = 0 # Number of search nodes expanded
     
   def getStartState(self):
     "Returns the start state (in your state space, not the full Pacman state space)"
-    return (self.startingPosition, self.cornersremaining)
+    "*** YOUR CODE HERE ***"
+    return (self.startingPosition, (False, False, False, False))
     
   def isGoalState(self, state):
     "Returns whether this search state is a goal state of the problem"
-    return len(state[1])==0   
+    "*** YOUR CODE HERE ***"
+    position, corners = state
+    bl, tl, br, tr = corners
+    return bl and tl and br and tr
+       
   def getSuccessors(self, state):
     """
     Returns successor states, the actions they require, and a cost of 1.
@@ -305,16 +307,25 @@ class CornersProblem(search.SearchProblem):
     for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
       # Add a successor state to the successor list if the action is legal
       # Here's a code snippet for figuring out whether a new position hits a wall:
-      x,y = state[0]
+      #   x,y = currentPosition
+      #   dx, dy = Actions.directionToVector(action)
+      #   nextx, nexty = int(x + dx), int(y + dy)
+      #   hitsWall = self.walls[nextx][nexty]
+      
+      "*** YOUR CODE HERE ***"
+      position, corners = state
+      listcorners = list(corners)
+      x,y = position
       dx, dy = Actions.directionToVector(action)
       nextx, nexty = int(x + dx), int(y + dy)
-      hitsWall = self.walls[nextx][nexty]
-      if hitsWall:
-        continue
-      setofremainingcorners = copy.copy(state[1])
-      if (nextx, nexty) in setofremainingcorners:
-        setofremainingcorners.remove((nextx, nexty))
-      successors.append((((nextx, nexty), setofremainingcorners),action,1)) 
+      if not self.walls[nextx][nexty]:
+        nextposition = (nextx, nexty)
+        cost = self.costFn(nextposition)
+        for i in range(len(self.corners)):
+          if self.corners[i] == nextposition:
+            listcorners[i] = True
+        nextstate = (nextposition, tuple(listcorners))
+        successors.append((nextstate, action, cost))
       
     self._expanded += 1
     return successors
@@ -350,9 +361,13 @@ def cornersHeuristic(state, problem):
   corners = problem.corners # These are the corner coordinates
   walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
   
-  "*** YOUR CODE HERE ***"
-  return 0 # Default to trivial solution
-
+  position, corners = state
+  count = 0
+  for i in range(len(corners)):
+    if corners[i] == False:
+      count += 1
+  return count
+  
 class AStarCornersAgent(SearchAgent):
   "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
   def __init__(self):

@@ -67,6 +67,15 @@ def tinyMazeSearch(problem):
   w = Directions.WEST
   return  [s,s,w,s,w,w,s,w]
 
+
+
+def nullHeuristic(state, problem=None):
+  """
+  A heuristic function estimates the cost from the current state to the nearest
+  goal in the provided SearchProblem.  This heuristic is trivial.
+  """
+  return 0
+
 def depthFirstSearch(problem):
   """
   Search the deepest nodes in the search tree first [p 85].
@@ -83,22 +92,22 @@ def depthFirstSearch(problem):
   """
   "*** YOUR CODE HERE ***"
   frontier = util.Stack()
-  return greedySearch(problem, frontier)
+  return greedySearch(problem, frontier, nullHeuristic)
 
 def priorityfunction(item):
   return item[1]
 
 def uniformCostSearch(problem):
   frontier = util.PriorityQueueWithFunction(priorityfunction)
-  return greedySearch(problem, frontier)
+  return greedySearch(problem, frontier, nullHeuristic)
 
 def breadthFirstSearch(problem):
   "Search the shallowest nodes in the search tree first. [p 81]"
   "*** YOUR CODE HERE ***"
   frontier = util.Queue()
-  return greedySearch(problem, frontier)
+  return greedySearch(problem, frontier, nullHeuristic)
 
-def greedySearch(problem, frontier):
+def greedySearch(problem, frontier, heuristic):
   import copy
   frontier.push((problem.getStartState(), 0))
   visitedstates = {str(problem.getStartState()) : (0, [])}
@@ -114,7 +123,7 @@ def greedySearch(problem, frontier):
       if str(option[0]) not in visitedstates:
         newpath = copy.copy(currstatepath)
         newpath.append(option[1])
-        newstatehistory = (currstatecost+option[2], newpath)
+        newstatehistory = (currstatecost+option[2]+heuristic(option[0], problem), newpath)
         visitedstates[str(option[0])] = newstatehistory
         frontier.push((option[0], currstatecost+option[2]))
         if problem.isGoalState(option[0]):
@@ -126,17 +135,11 @@ def greedySearch(problem, frontier):
   else:
     return []
 
-def nullHeuristic(state, problem=None):
-  """
-  A heuristic function estimates the cost from the current state to the nearest
-  goal in the provided SearchProblem.  This heuristic is trivial.
-  """
-  return 0
-
 def aStarSearch(problem, heuristic=nullHeuristic):
   "Search the node that has the lowest combined cost and heuristic first."
   "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
+  frontier = util.PriorityQueueWithFunction(priorityfunction)
+  return greedySearch(problem, frontier, heuristic)
     
   
 # Abbreviations

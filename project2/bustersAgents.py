@@ -107,5 +107,35 @@ class GreedyBustersAgent(BustersAgent):
     livingGhostPositionDistributions = [beliefs for i,beliefs
                                         in enumerate(self.ghostBeliefs)
                                         if livingGhosts[i+1]]
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    chosenGhost=-1
+    distanceToChosenGhost = 999999
+    chosenGhostMLE=None
+    for i in range(0, len(livingGhostPositionDistributions)):
+      ghostMLE = self.getMLE(livingGhostPositionDistributions[i])
+      print str(i) + ": " + str(ghostMLE)
+      distanceToGhost = self.distancer.getDistance(ghostMLE, pacmanPosition)
+      if distanceToGhost<distanceToChosenGhost:
+        distanceToChosenGhost=distanceToGhost
+        chosenGhost = i
+        chosenGhostMLE = ghostMLE
+    chosenAction = None
+    chosenActionCost = 999999 
+    for action in legal: 
+      successorPosition = Actions.getSuccessor(pacmanPosition, action)
+      if self.distancer.getDistance(chosenGhostMLE, successorPosition)<chosenActionCost:
+        chosenAction=action
+        chosenActionCost=self.distancer.getDistance(chosenGhostMLE, successorPosition)
+
+    return chosenAction
+
+  def getMLE(self,distribution):
+     maxp = 0
+     maximizer = None
+     for state in distribution:
+       print str(state) + ":" + str(distribution[state])
+       p = distribution[state]
+       if p> maxp:
+         maxp = p
+         maximizer = state
+     return maximizer
+    

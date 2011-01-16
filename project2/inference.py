@@ -180,9 +180,12 @@ class ExactInference(InferenceModule):
           will move to from the provided gameState.  The ghost must be placed
           in the gameState with a call to self.setGhostPosition above.
     """
-    
-    "*** YOUR CODE HERE ***"
-
+    newbeliefs = util.Counter()
+    for p in self.legalPositions:
+      newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, p))
+      for newPos, prob in newPosDist.items():
+        newbeliefs[newPos] = newbeliefs[newPos] + (prob * self.beliefs[p])
+    self.beliefs = newbeliefs
   def getBeliefDistribution(self):
     return self.beliefs
 

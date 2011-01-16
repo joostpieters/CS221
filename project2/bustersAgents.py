@@ -109,14 +109,47 @@ class GreedyBustersAgent(BustersAgent):
                                         if livingGhosts[i+1]]
     
     return self.cs221Strat(livingGhostPositionDistributions, legal, pacmanPosition)
-  
+  def wittenStrat(self, livingGhostPositionDistributions, legal, pacmanPosition):
+    expectations = util.Counter()
+    for dist in livingGhostPositionDistributions:
+      for p in dist:
+        expectations[p]= expectations[p]+dist[p]
+    
+    chosenAction = None
+    chosenActionValue = 0
+    for action in legal:
+      successorPosition = Actions.getSuccessor(pacmanPosition, action)
+      actionValue = expectations[successorPosition]
+      if chosenAction is None or actionValue > chosenActionValue:
+        chosenAction =action
+        chosenActionValue = actionValue 
+    print chosenAction
+    if chosenActionValue == 0:
+      return self.lopezStrat(livingGhostPositionDistributions, legal, pacmanPosition)
+    return chosenAction
+  def lopezStrat(self, livingGhostPositionDistributions, legal, pacmanPosition):
+    expectations = util.Counter()
+    for dist in livingGhostPositionDistributions:
+      for p in dist:
+        expectations[p]= expectations[p]+dist[p]
+    state = self.getMLE(expectations)
+    
+    chosenAction = None
+    chosenActionCost = 999999
+    for action in legal:
+      successorPosition = Actions.getSuccessor(pacmanPosition, action)
+      if self.distancer.getDistance(state, successorPosition)<chosenActionCost:
+        chosenAction=action
+        chosenActionCost=self.distancer.getDistance(state, successorPosition)
+
+    return chosenAction
+
   def cs221Strat(self, livingGhostPositionDistributions, legal, pacmanPosition):
     chosenGhost=-1
     distanceToChosenGhost = 999999
     chosenGhostMLE=None
     for i in range(0, len(livingGhostPositionDistributions)):
       ghostMLE = self.getMLE(livingGhostPositionDistributions[i])
-      print str(i) + ": " + str(ghostMLE)
       distanceToGhost = self.distancer.getDistance(ghostMLE, pacmanPosition)
       if distanceToGhost<distanceToChosenGhost:
         distanceToChosenGhost=distanceToGhost
@@ -131,11 +164,11 @@ class GreedyBustersAgent(BustersAgent):
         chosenActionCost=self.distancer.getDistance(chosenGhostMLE, successorPosition)
 
     return chosenAction
+  
   def getMLE(self,distribution):
      maxp = 0
      maximizer = None
      for state in distribution:
-       print str(state) + ":" + str(distribution[state])
        p = distribution[state]
        if p> maxp:
          maxp = p

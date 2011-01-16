@@ -130,7 +130,6 @@ class ExactInference(InferenceModule):
     if noisyDistance is None:
       self.beliefs = util.Counter()
       self.beliefs[self.getJailPosition()]=1.0
-      print "Prison is your home"
     else:
       for p in self.legalPositions:
         trueDistance = util.manhattanDistance(p, pacmanPosition)

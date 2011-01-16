@@ -107,6 +107,10 @@ class GreedyBustersAgent(BustersAgent):
     livingGhostPositionDistributions = [beliefs for i,beliefs
                                         in enumerate(self.ghostBeliefs)
                                         if livingGhosts[i+1]]
+    
+    return self.cs221Strat(livingGhostPositionDistributions, legal, pacmanPosition)
+  
+  def cs221Strat(self, livingGhostPositionDistributions, legal, pacmanPosition):
     chosenGhost=-1
     distanceToChosenGhost = 999999
     chosenGhostMLE=None
@@ -127,7 +131,6 @@ class GreedyBustersAgent(BustersAgent):
         chosenActionCost=self.distancer.getDistance(chosenGhostMLE, successorPosition)
 
     return chosenAction
-
   def getMLE(self,distribution):
      maxp = 0
      maximizer = None

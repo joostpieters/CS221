@@ -107,6 +107,33 @@ class MinimaxAgent(MultiAgentSearchAgent):
     Your minimax agent (question 2)
   """
 
+  def ourgetMinMaxAction(self, gameState, currentActor, depthtogo):
+    if (currentActor == gameState.getNumAgents()) and depthtogo>1:
+      return self.ourgetMinMaxAction(gameState, 0, depthtogo-1)
+    if (currentActor == gameState.getNumAgents()) and depthtogo==1:
+      return [None, self.evaluationFunction(gameState)]
+
+    actions = gameState.getLegalActions(currentActor)
+    if len(actions)==0:
+      return [None, self.evaluationFunction(gameState)]
+    minactionvalue=float("Inf")
+    maxactionvalue=float("-Inf")
+    minaction = None
+    maxaction = None
+    for action in actions:
+      [newaction, value] = self.ourgetMinMaxAction(gameState.generateSuccessor(currentActor, action), currentActor+1, depthtogo)
+      if value<minactionvalue:
+        minactionvalue=value
+        minaction = action
+      if value>maxactionvalue:
+        maxactionvalue=value
+        maxaction = action
+
+    if currentActor!=0:
+      return [minaction, minactionvalue]
+    else:
+      return [maxaction, maxactionvalue]
+
   def getAction(self, gameState):
     """
       Returns the minimax action from the current gameState using self.depth
@@ -128,8 +155,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    currentActor = 0
+    [action, value] = self.ourgetMinMaxAction(gameState, currentActor, self.depth)
+    print("we think value is " + str(value))
+    return action
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
     Your minimax agent with alpha-beta pruning (question 3)

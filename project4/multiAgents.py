@@ -107,9 +107,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
     Your minimax agent (question 2)
   """
 
-  def ourgetMinMaxAction(self, gameState, currentActor, depthtogo):
+  def getMinMaxAction(self, gameState, currentActor, depthtogo):
     if (currentActor == gameState.getNumAgents()) and depthtogo>1:
-      return self.ourgetMinMaxAction(gameState, 0, depthtogo-1)
+      return self.getMinMaxAction(gameState, 0, depthtogo-1)
     if (currentActor == gameState.getNumAgents()) and depthtogo==1:
       return [None, self.evaluationFunction(gameState)]
 
@@ -121,7 +121,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
     minaction = None
     maxaction = None
     for action in actions:
-      [newaction, value] = self.ourgetMinMaxAction(gameState.generateSuccessor(currentActor, action), currentActor+1, depthtogo)
+      [newaction, value] = self.getMinMaxAction(gameState.generateSuccessor(currentActor, action), currentActor+1, depthtogo)
       if value<minactionvalue:
         minactionvalue=value
         minaction = action
@@ -154,37 +154,111 @@ class MinimaxAgent(MultiAgentSearchAgent):
       gameState.getNumAgents():
         Returns the total number of agents in the game
     """
-    "*** YOUR CODE HERE ***"
     currentActor = 0
-    [action, value] = self.ourgetMinMaxAction(gameState, currentActor, self.depth)
+    [action, value] = self.getMinMaxAction(gameState, currentActor, self.depth)
     print("we think value is " + str(value))
     return action
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
     Your minimax agent with alpha-beta pruning (question 3)
   """
+  def getMinMaxAction(self, gameState, currentActor, depthtogo, bestguarenteed, worstguarenteed):
+    if (currentActor == gameState.getNumAgents()) and depthtogo>1:      
+      return self.getMinMaxAction(gameState, 0, depthtogo-1,bestguarenteed, worstguarenteed)
+    if (currentActor == gameState.getNumAgents()) and depthtogo==1:
+      return [None, self.evaluationFunction(gameState)]
 
+    actions = gameState.getLegalActions(currentActor)
+    if len(actions)==0:
+      return [None, self.evaluationFunction(gameState)]
+    minactionvalue=float("Inf")
+    maxactionvalue=float("-Inf")
+    minaction = None
+    maxaction = None
+    for action in actions:
+      [newaction, value] = self.getMinMaxAction(gameState.generateSuccessor(currentActor, action), currentActor+1, depthtogo,bestguarenteed, worstguarenteed)
+      if (currentActor != 0 and bestguarenteed>value) or (currentActor == 0 and worstguarenteed<value):
+        return [action, value]
+      if value<minactionvalue:
+        minactionvalue=value
+        minaction = action
+      if value>maxactionvalue:
+        maxactionvalue=value
+        maxaction = action
+      if (currentActor==0 and value>bestguarenteed):
+        bestguarenteed == value 
+      if (currentActor!=0 and value<worstguarenteed):
+        worstguarenteed == value
+
+    if currentActor!=0:
+      return [minaction, minactionvalue]
+    else:
+      return [maxaction, maxactionvalue]
   def getAction(self, gameState):
     """
       Returns the minimax action using self.depth and self.evaluationFunction
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    currentActor = 0
+    bestgiven = float("-Inf")
+    worstgiven = float("Inf")
+    [action, value] = self.getMinMaxAction(gameState, currentActor, self.depth, bestgiven, worstgiven)
+    print("we think value is " + str(value))
+    return action
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
   """
     Your expectimax agent (question 4)
   """
 
+  def getExpectiMaxAction(self, gameState, currentActor, depthtogo):
+    if (currentActor == gameState.getNumAgents()) and depthtogo>1:
+      return self.getExpectiMaxAction(gameState, 0, depthtogo-1)
+    if (currentActor == gameState.getNumAgents()) and depthtogo==1:
+      return [None, self.evaluationFunction(gameState)]
+
+    actions = gameState.getLegalActions(currentActor)
+    if len(actions)==0:
+      return [None, self.evaluationFunction(gameState)]
+    maxactionvalue=float("-Inf")
+    maxaction = None
+    runningsumofvalue = 0
+    for action in actions:
+      [newaction, value] = self.getExpectiMaxAction(gameState.generateSuccessor(currentActor, action), currentActor+1, depthtogo)
+      runningsumofvalue = runningsumofvalue + value
+      if value>maxactionvalue:
+        maxactionvalue=value
+        maxaction = action
+
+    if currentActor!=0:
+      return [None, runningsumofvalue/len(actions)]
+    else:
+      return [maxaction, maxactionvalue]
+
   def getAction(self, gameState):
     """
-      Returns the expectimax action using self.depth and self.evaluationFunction
+      Returns the minimax action from the current gameState using self.depth
+      and self.evaluationFunction.
 
-      All ghosts should be modeled as choosing uniformly at random from their
-      legal moves.
+      Here are some method calls that might be useful when implementing minimax.
+
+      gameState.getLegalActions(agentIndex):
+        Returns a list of legal actions for an agent
+        agentIndex=0 means Pacman, ghosts are >= 1
+
+      Directions.STOP:
+        The stop direction, which is always legal
+
+      gameState.generateSuccessor(agentIndex, action):
+        Returns the successor game state after an agent takes an action
+
+      gameState.getNumAgents():
+        Returns the total number of agents in the game
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    currentActor = 0
+    [action, value] = self.getExpectiMaxAction(gameState, currentActor, self.depth)
+    print("we think value is " + str(value))
+    return action
 
 def betterEvaluationFunction(currentGameState):
   """

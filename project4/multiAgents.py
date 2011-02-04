@@ -11,6 +11,7 @@ from game import Directions
 import random, util
 
 from game import Agent
+from game import Actions
 
 class ReflexAgent(Agent):
   """
@@ -266,15 +267,113 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     print("we think value is " + str(value))
     return action
 
+
+
+def closestFood(pos, food, walls):
+  """
+  closestFood -- this is similar to the function that we have
+  worked on in the search project; here its all in one place
+  Taken from Project 3
+  """
+  fringe = [(pos[0], pos[1], 0)]
+  expanded = set()
+  while fringe:
+    pos_x, pos_y, dist = fringe.pop(0)
+    if (pos_x, pos_y) in expanded:
+      continue
+    expanded.add((pos_x, pos_y))
+    # if we find a food at this location then exit
+    if food[pos_x][pos_y]:
+      return dist
+    # otherwise spread out from the location to its neighbours
+    nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+    for nbr_x, nbr_y in nbrs:
+      fringe.append((nbr_x, nbr_y, dist+1))
+  # no food found
+  return None
+
+""" This taken from assignment 3"""
+def getFeatures(state):
+  # extract the grid of food and wall locations and get the ghost locations
+  food = state.getFood()
+  walls = state.getWalls()
+  ghosts = state.getGhostPositions()
+
+  features = util.Counter()
+    
+  features["bias"] = 1.0
+    
+  # compute the location of pacman after he takes the action
+  x, y = state.getPacmanPosition()
+    
+  # count the number of ghosts 1-step away
+  # modify so if a ghost is scared, it doesn't count
+
+  badghostscount = 0
+  for i in range(1, state.getNumAgents()):
+    ghost_pos = state.getGhostPosition(i)
+    ghost_state = state.getGhostState(i)
+    if (x,y) in Actions.getLegalNeighbors(ghost_pos, walls) and not ghost_state.scaredTimer > 0:
+      badghostscount = badghostscount + 1
+
+  features["#-of-ghosts-1-step-away"] = sum((x, y) in Actions.getLegalNeighbors(g, walls) for g in ghosts)
+
+  features["#-of-badghosts"] = badghostscount
+
+  # if there is no danger of ghosts then add the food feature
+  if not features["#-of-ghosts-1-step-away"] and food[x][y]:
+    features["eats-food"] = 1.0
+    
+  dist = closestFood((x, y), food, walls)
+  if dist is not None:
+    # make the distance a number less than one otherwise the update
+    # will diverge wildly
+    features["closest-food"] = float(dist) / (walls.width * walls.height)
+  return features
+  
+
 def betterEvaluationFunction(currentGameState):
   """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION: This evaluation function uses the feature extraction from
+    assignment 3 and combines them as follows:
+
+    If you either win or lose, you are assigned a big win/penalty.  The penalty
+    for losing is higher than the evaluation for winning, because it is okay for
+    pac-man to be more risk-averse, as later feature extraction will have pac-man
+    generally avoid ghosts
+
+    We then average evaluate to the current game score.  We subtract from it a heavy
+    weight times the number of neighboring ghosts, causing pac-man to avoid situations
+    where he is near a ghost.  We then more lightly weight in the square of the distance
+    to the closest food (we use the square to more rapidly approach the food when we
+    are close -- we are willing to take more risk to be near ghosts when we are close
+    to the win, since that close to the win, we are risk-averse by our leaves nearly
+    always reaching the heavy-penalty isLose condition).
   """
-  "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
+  pos = currentGameState.getPacmanPosition()
+  food = currentGameState.getFood()
+  walls = currentGameState.getWalls()
+
+  features = getFeatures(currentGameState)
+
+  if currentGameState.isWin():
+    return 2000
+  elif currentGameState.isLose():
+    return -5000
+  
+  total = currentGameState.getScore()
+
+  if features["#-of-ghosts-1-step-away"]:
+    total = total - 300 * features["#-of-ghosts-1-step-away"]
+
+  if features["closest-food"]:
+    total = total + 50 * (1 - features["closest-food"]) * (1 - features["closest-food"])
+  
+
+  return total
 
 # Abbreviation
 better = betterEvaluationFunction

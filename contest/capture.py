@@ -583,9 +583,9 @@ def readCommand( argv ):
   parser = OptionParser(usageStr)
 
   parser.add_option('-r', '--red', help=default('Red team'),
-                    default='BaselineAgents')
+                    default='')
   parser.add_option('-b', '--blue', help=default('Blue team'),
-                    default='BaselineAgents')
+                    default='')
   parser.add_option('--redOpts', help=default('Options for red team (e.g. first=keys)'),
                     default='')
   parser.add_option('--blueOpts', help=default('Options for blue team (e.g. first=keys)'),
@@ -708,7 +708,8 @@ def loadAgents(isRed, factory, textgraphics, cmdLineArgs):
     return [None for i in range(3)]
 
 
-  factory = factory + "." + conf.AgentFactory
+  if(factory == ''):
+      factory = factory + "." + conf.AgentFactory
   args = dict(conf.AgentArgs)
   args.update(cmdLineArgs)  # Add command line args with priority
 

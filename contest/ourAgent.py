@@ -2,6 +2,7 @@ from captureAgents import AgentFactory
 from captureAgents import CaptureAgent
 import distanceCalculator
 import operator
+import opponentModeler
 import random, time, util
 from game import Directions
 import game
@@ -11,6 +12,7 @@ from util import nearestPoint
 class inferenceModule():
   def __init__(self):
     self.hasBeenInitialized = False
+    self.opponentModel = opponentModeler.opponentModel(self)
   
   def isOnOurSide(self,pos):
     if pos in self.ourside:
@@ -55,20 +57,7 @@ class inferenceModule():
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
        self.enemypositions[enemy][gameState.getInitialAgentPosition(enemy)] = 1
-   
-  def restrictBasedOnSensor(self,gameState, ourAgentpos):
-    agentdistances = gameState.getAgentDistances()
-    for enemy in self.enemypositions: #this is iterating over the keys to a map
-      if gameState.getAgentPosition(enemy):
-        self.enemypositions[enemy] = util.Counter()
-        self.enemypositions[enemy][gameState.getAgentPosition(enemy)] = 1
-      else:
-        observeddistance = agentdistances[enemy]
-        for pos in self.enemypositions[enemy]:
-          self.enemypositions[enemy][pos] = self.enemypositions[enemy][pos] * gameState.getDistanceProb(util.manhattanDistance(ourAgentpos,pos), observeddistance)
-#          self.enemypositions[enemy] = self.enemypositions[enemy] * gameState.getDistanceProb(1, observeddistance)
-      self.enemypositions[enemy].normalize()
- 
+  
   def getInfoOnEnemyAgent(self, agentNumber):
     return self.enemypositions[agentNumber]
 
@@ -78,19 +67,13 @@ class inferenceModule():
       MLEestimators[enemy] = self.enemypositions[enemy].argMax()
     
     return MLEestimators      
-        
-  def updateBasedOnMovement(self, agentIndex, gameState): #currently this just assumes our opponents are wandering drunkenly.  Might improve that. Further doesn't reset them based on if they were captured.
-    self.posterior = util.Counter()
-    for position in self.enemypositions[agentIndex]:
-      neighbors = []
-      for p in self.legalPositions:  #we might consider optimizing this, but it should be ok.  Right now the process is O(n^2), could be O(n), but its the exponentials that kill ya.
-        if util.manhattanDistance(p, position) <=1:
-          neighbors.append(p)
- 
-      for neighbor in neighbors:
-        self.posterior[neighbor] =  self.posterior[neighbor] + (self.enemypositions[agentIndex][position]/float(len(neighbors)))
-    self.enemypositions[agentIndex] = self.posterior
+  
+  def restrictBasedOnSensor(self,gameState, ourAgentPos):
+    self.opponentModel.updatePositionsBasedOnSensor(gameState,ourAgentPos)
       
+  def updateBasedOnMovement(self, agentIndex, gameState): 
+    self.opponentModel.updateBasedOnMovement(agentIndex, gameState)
+
 class ourFactory(AgentFactory):
   "Returns one keyboard agent and offensive reflex agents"
 
@@ -182,11 +165,11 @@ class ourAgent(CaptureAgent):
 
   def chooseAction(self, gameState):
     self.updateInference(gameState)
-    map = util.Counter()
-    map[(30,14)] =1
-    map[(16,1)]=1
-    self.displayDistributionsOverPositions([map])
     actions = gameState.getLegalActions(self.index)
+    
+    #draw me a picture
+    if self.isRed:
+      self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
 
     bestaction = None
     bestranking = -1e10

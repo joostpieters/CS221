@@ -1,6 +1,7 @@
 from captureAgents import AgentFactory
 from captureAgents import CaptureAgent
 import distanceCalculator
+import holdTheLineModule
 import operator
 import opponentModeler
 import random, time, util
@@ -58,6 +59,9 @@ class inferenceModule():
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
        self.enemypositions[enemy][gameState.getInitialAgentPosition(enemy)] = 1
+
+  def getOurSideDistances(self, posa, posb):
+    return self.ourSideDistancer.getDistance(posa, posb)
   
   def getInfoOnEnemyAgent(self, agentNumber):
     return self.enemypositions[agentNumber]
@@ -118,8 +122,8 @@ class ourAgent(CaptureAgent):
       self.enemies = gameState.getRedTeamIndices()
  
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies) #infModule checks to make sure we don't do this twice
-    self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
-    #self.holdTheLineModule = holdTheLineModule.holdTheLineModule(self, self.friends, self.enemies, self.isRed, self.inferenceModule)
+    #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
+    self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
  
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
@@ -127,7 +131,7 @@ class ourAgent(CaptureAgent):
 
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    return self.agentModule.chooseAction(gameState)
+    return self.holdTheLineModule.chooseAction(gameState)
   
   def getWhoMovedLast(self, gameState): #this is buggy since we might be first to move.    
     return (self.index-1) % (len(self.friends) + len(self.enemies))

@@ -1,13 +1,11 @@
-class holdTheLineModule(agentModule):
-    weights.normalize()
-    self.displayDistributionsOverPositions([weights])
+import capture
+import module
+
+class holdTheLineModule(module.agentModule):
 
   def chooseAction(self, gameState):
+    print 'Choosing action old school style: ' + str(self.index)
     actions = gameState.getLegalActions(self.index)
-
-    #draw me a picture
-    if self.isRed:
-      self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
 
     bestaction = None
     bestranking = -1e10
@@ -37,9 +35,9 @@ class holdTheLineModule(agentModule):
     else:
       return successor
   
-    def matchUp(self, theirpos, ourpos):
-    return min([self.getMazeDistance(theirpos,pos) - self.getOurSideMazeDistance(ourpos,pos) for pos in self.infer
-enceModule.edge])
+  def matchUp(self, theirpos, ourpos):
+    return min([self.getMazeDistance(theirpos,pos) - self.getOurSideMazeDistance(ourpos,pos) for pos in self.inferenceModule.edge])
+
   def findWeakestLink(self, enemyPositions, ourPositions):
     if len(enemyPositions) == 0:
       return 1e10
@@ -47,8 +45,7 @@ enceModule.edge])
     for i in range(0,len(ourPositions)):
       newOurPos = ourPositions[:]
       newOurPos.remove(ourPositions[i]) #this is ok even if two pacmen are hanging out on same square
-      thisstrat = min(self.findWeakestLink(enemyPositions[1:], newOurPos), self.matchUp(enemyPositions[0],ourPosit
-ions[i]))
+      thisstrat = min(self.findWeakestLink(enemyPositions[1:], newOurPos), self.matchUp(enemyPositions[0],ourPositions[i]))
       if thisstrat > bestvalue:
         bestvalue = thisstrat
     return bestvalue
@@ -56,8 +53,7 @@ ions[i]))
   def distanceToEdge(self,ourpositions):
     totalcost = 0
     for border in self.inferenceModule.edge:
-      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions]) + sum([self.getOu
-rSideMazeDistance(border,p) for p in ourpositions])/10.0
+      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions]) + sum([self.getOurSideMazeDistance(border,p) for p in ourpositions])/10.0
     return totalcost
 
   def evaluateBoard(self, gameState):

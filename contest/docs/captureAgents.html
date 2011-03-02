@@ -23,9 +23,7 @@
 <span style="color: blue; font-weight: bold">from </span>util <span style="color: blue; font-weight: bold">import </span>nearestPoint
 <span style="color: blue; font-weight: bold">import </span>util
 
-<span style="color: green; font-style: italic"># Note: the following class is not used, but is kept for backwards
-# compatibility with team submissions that try to import it.
-</span><span style="color: blue; font-weight: bold">class </span>AgentFactory<span style="font-weight: bold">:
+<span style="color: blue; font-weight: bold">class </span>AgentFactory<span style="font-weight: bold">:
   </span><span style="color: red">"Generates agents for a side"
 
   </span><span style="color: blue; font-weight: bold">def </span>__init__<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">, </span>isRed<span style="font-weight: bold">, **</span>args<span style="font-weight: bold">):
@@ -104,7 +102,7 @@
     </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>distancer <span style="font-weight: bold">= </span>distanceCalculator<span style="font-weight: bold">.</span>Distancer<span style="font-weight: bold">(</span>gameState<span style="font-weight: bold">.</span>data<span style="font-weight: bold">.</span>layout<span style="font-weight: bold">)
     
     </span><span style="color: green; font-style: italic"># comment this out to forgo maze distance computation and use manhattan distances
-    </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>distancer<span style="font-weight: bold">.</span>getMazeDistances<span style="font-weight: bold">()
+    # self.distancer.getMazeDistances()
     
     </span><span style="color: blue; font-weight: bold">import </span>__main__
     <span style="color: blue; font-weight: bold">if </span><span style="color: red">'_display' </span><span style="color: blue; font-weight: bold">in </span>dir<span style="font-weight: bold">(</span>__main__<span style="font-weight: bold">):
@@ -288,8 +286,7 @@
   <span style="color: blue; font-weight: bold">def </span>getAction<span style="font-weight: bold">( </span><span style="color: blue">self</span><span style="font-weight: bold">, </span>state <span style="font-weight: bold">):
     </span><span style="color: blue; font-weight: bold">import </span>random<span style="font-weight: bold">, </span>time
     time<span style="font-weight: bold">.</span>sleep<span style="font-weight: bold">(</span><span style="color: red">2.0</span><span style="font-weight: bold">)
-    </span><span style="color: blue; font-weight: bold">return </span>random<span style="font-weight: bold">.</span>choice<span style="font-weight: bold">( </span>state<span style="font-weight: bold">.</span>getLegalActions<span style="font-weight: bold">( </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>index <span style="font-weight: bold">) )
-</span>
+    </span><span style="color: blue; font-weight: bold">return </span>random<span style="font-weight: bold">.</span>choice<span style="font-weight: bold">( </span>state<span style="font-weight: bold">.</span>getLegalActions<span style="font-weight: bold">( </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>index <span style="font-weight: bold">) )</span>
   </pre>
   </body>
   </html>

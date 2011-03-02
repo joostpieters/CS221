@@ -15,8 +15,6 @@ import distanceCalculator
 from util import nearestPoint
 import util
 
-# Note: the following class is not used, but is kept for backwards
-# compatibility with team submissions that try to import it.
 class AgentFactory:
   "Generates agents for a side"
 
@@ -96,7 +94,7 @@ class CaptureAgent(Agent):
     self.distancer = distanceCalculator.Distancer(gameState.data.layout)
     
     # comment this out to forgo maze distance computation and use manhattan distances
-    self.distancer.getMazeDistances()
+    # self.distancer.getMazeDistances()
     
     import __main__
     if '_display' in dir(__main__):

@@ -45,7 +45,6 @@ from game import Configuration
 from game import Agent
 from game import reconstituteGrid
 import sys, util, types, time, random
-import keyboardAgents
 
 # If you change these, you won't affect the server, so you can't cheat
 KILL_POINTS = 0
@@ -584,17 +583,13 @@ def readCommand( argv ):
   parser = OptionParser(usageStr)
 
   parser.add_option('-r', '--red', help=default('Red team'),
-                    default='baselineTeam')
+                    default='BaselineAgents')
   parser.add_option('-b', '--blue', help=default('Blue team'),
-                    default='baselineTeam')
+                    default='BaselineAgents')
   parser.add_option('--redOpts', help=default('Options for red team (e.g. first=keys)'),
                     default='')
   parser.add_option('--blueOpts', help=default('Options for blue team (e.g. first=keys)'),
                     default='')
-  parser.add_option('--keys0', help='Make agent 0 (first red player) a keyboard agent', action='store_true',default=False)
-  parser.add_option('--keys1', help='Make agent 1 (second red player) a keyboard agent', action='store_true',default=False)
-  parser.add_option('--keys2', help='Make agent 2 (first blue player) a keyboard agent', action='store_true',default=False)
-  parser.add_option('--keys3', help='Make agent 3 (second blue player) a keyboard agent', action='store_true',default=False)
   parser.add_option('-l', '--layout', dest='layout',
                     help=default('the LAYOUT_FILE from which to load the map layout; use RANDOM for a random maze'),
                     metavar='LAYOUT_FILE', default='defaultCapture')
@@ -607,10 +602,12 @@ def readCommand( argv ):
   parser.add_option('-Q', '--super-quiet', action='store_true', dest="super_quiet",
                     help='Same as -q but agent output is also suppressed', default=False)
 
+  parser.add_option('-k', '--numPlayers', type='int', dest='numPlayers',
+                    help=default('The maximum number of players'), default=4)
   parser.add_option('-z', '--zoom', type='float', dest='zoom',
                     help=default('Zoom in the graphics'), default=1)
   parser.add_option('-i', '--time', type='int', dest='time',
-                    help=default('TIME limit of a game in moves'), default=1200, metavar='TIME')
+                    help=default('TIME limit of a game in moves'), default=3000, metavar='TIME')
   parser.add_option('-n', '--numGames', type='int',
                     help=default('Number of games to play'), default=1)
   parser.add_option('-f', '--fixRandomSeed', action='store_true',
@@ -669,17 +666,6 @@ def readCommand( argv ):
   print '\nBlue team %s with %s:' % (options.blue, blueArgs)
   blueAgents = loadAgents(False, options.blue, nokeyboard, blueArgs)
   args['agents'] = sum([list(el) for el in zip(redAgents, blueAgents)],[]) # list of agents
-  numKeyboardAgents = 0
-  for index, val in enumerate([options.keys0, options.keys1, options.keys2, options.keys3]):
-    if not val: continue
-    if numKeyboardAgents == 0:
-      agent = keyboardAgents.KeyboardAgent(index)
-    elif numKeyboardAgents == 1:
-      agent = keyboardAgents.KeyboardAgent2(index)
-    else:
-      raise Exception('Max of two keyboard agents supported')
-    numKeyboardAgents += 1
-    args['agents'][index] = agent
 
   # Choose a layout
   if options.layout == 'RANDOM': options.layout = randomLayout()
@@ -688,6 +674,8 @@ def readCommand( argv ):
   import layout
   args['layout'] = layout.getLayout( options.layout )
   if args['layout'] == None: raise Exception("The layout " + options.layout + " cannot be found")
+
+  args['agents'] = args['agents'][:min(args['layout'].getNumGhosts(), options.numPlayers)]
   args['length'] = options.time
   args['numGames'] = options.numGames
   args['numTraining'] = options.numTraining
@@ -707,34 +695,56 @@ def randomLayout():
 import traceback
 def loadAgents(isRed, factory, textgraphics, cmdLineArgs):
   "Calls agent factories and returns lists of agents"
+  # Looks through all pythonPath Directories for the right module
+  import os
+  dirname = 'teams/'
+  sys.path.append(os.path.join(sys.path[0], 'teams'))
   try:
-    module = __import__(factory)
+    #conf = __import__(factory + ".config")
+    conf = __import__("config")
   except ImportError:
-    print 'Error: The team "' + factory + '" could not be loaded! '
+    print 'Error: The team "' + factory + '" config could not be loaded! '
     traceback.print_exc()
-    return [None for i in range(2)]
+    return [None for i in range(3)]
 
-  args = dict()
+
+  factory = factory + "." + conf.AgentFactory
+  args = dict(conf.AgentArgs)
   args.update(cmdLineArgs)  # Add command line args with priority
 
-  print "Loading Team:", factory
+  print "Loading Team:", conf.TeamName
   print "Arguments:", args
+  print "Partners:", conf.Partners
+  print "Agent Factory:", factory
+
+  factoryClassName = factory.split(".")[-1]
+  factoryPackageName = ".".join(factory.split(".")[1:-1])
+  if factoryPackageName == "":
+    factoryPackageName,factoryClassName=factoryClassName,factoryPackageName
 
   # if textgraphics and factoryClassName.startswith('Keyboard'):
   #   raise Exception('Using the keyboard requires graphics (no text display, quiet or training games)')
 
+  print "Namespace: ", factoryPackageName
+  print "Agent: ", factoryClassName
+
   try:
-    createTeamFunc = getattr(module, 'createTeam')
-  except AttributeError:
+    module = __import__(factoryPackageName)
+  except ImportError, data:
+    module = None
+
+  foundFactory = getattr(module, factoryClassName, None)
+  if not module or not foundFactory:
     print 'Error: The team "' + factory + '" could not be loaded! '
     traceback.print_exc()
-    return [None for i in range(2)]
+    return [None for i in range(3)]
 
+  foundFactory = foundFactory(isRed=isRed, **args)
   indexAddend = 0
   if not isRed:
     indexAddend = 1
-  indices = [2*i + indexAddend for i in range(2)]
-  return createTeamFunc(indices[0], indices[1], isRed, **args)
+  indices = [2*i + indexAddend for i in range(3)]
+  return [foundFactory.getAgent(i) for i in indices]
 
 def replayGame( layout, agents, actions, display, length ):
     rules = CaptureRules()
@@ -780,12 +790,13 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
     g.record = None
     if record:
       import time, cPickle, game
-      #fname = ('recorded-game-%d' % (i + 1)) +  '-'.join([str(t) for t in time.localtime()[1:6]])
-      #f = file(fname, 'w')
+      fname = ('recorded-game-%d' % (i + 1)) +  '-'.join([str(t) for t in time.localtime()[1:6]])
+      f = file(fname, 'w')
       components = {'layout': layout, 'agents': [game.Agent() for a in agents], 'actions': g.moveHistory, 'length': length}
-      #f.close()
-      print "recorded"
       g.record = cPickle.dumps(components)
+      print >> f, g.record
+      f.close()
+      print "recorded"
 
   if numGames > 1:
     scores = [game.state.data.score for game in games]

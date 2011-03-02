@@ -192,7 +192,10 @@ def image(pos, file="../../blueghost.gif"):
     
     
 def refresh():
-      _canvas.update_idletasks()
+  try:  
+    _canvas.update_idletasks()
+  except:
+    print "",
                                                     
 def moveCircle(id, pos, r, endpoints=None):
     global _canvas_x, _canvas_y
@@ -212,7 +215,10 @@ def moveCircle(id, pos, r, endpoints=None):
     move_to(id, x0, y0)
 
 def edit(id, *args):
+  try:
     _canvas.itemconfigure(id, **dict(args))
+  except:
+    print "",
     
 def text(pos, color, contents, font='Helvetica', size=12, style='normal', anchor="nw"):
     global _canvas_x, _canvas_y
@@ -221,9 +227,12 @@ def text(pos, color, contents, font='Helvetica', size=12, style='normal', anchor
     return _canvas.create_text(x, y, fill=color, text=contents, font=font, anchor=anchor)
 
 def changeText(id, newText, font=None, size=12, style='normal'):
-  _canvas.itemconfigure(id, text=newText)
-  if font != None:
-    _canvas.itemconfigure(id, font=(font, '-%d' % size, style))
+  try:
+    _canvas.itemconfigure(id, text=newText)
+    if font != None:
+      _canvas.itemconfigure(id, font=(font, '-%d' % size, style))
+  except:
+    print "",
 
 def changeColor(id, newColor):
   _canvas.itemconfigure(id, fill=newColor)
@@ -324,18 +333,22 @@ def move_to(object, x, y=None,
         
     horiz = True
     newCoords = []
-    current_x, current_y = _canvas.coords(object)[0:2] # first point
-    for coord in  _canvas.coords(object):
-      if horiz:  
-        inc = x - current_x
-      else:      
-        inc = y - current_y
-      horiz = not horiz
+
+    try:
+      current_x, current_y = _canvas.coords(object)[0:2] # first point
+      for coord in  _canvas.coords(object):
+        if horiz:  
+          inc = x - current_x
+        else:      
+          inc = y - current_y
+        horiz = not horiz
+        
+        newCoords.append(coord + inc)
       
-      newCoords.append(coord + inc)
-    
-    _canvas.coords(object, *newCoords)
-    d_o_e(d_w)
+      _canvas.coords(object, *newCoords)
+      d_o_e(d_w)
+    except:
+      print "",
     
 def move_by(object, x, y=None,
             d_o_e=Tkinter.tkinter.dooneevent,
@@ -346,17 +359,23 @@ def move_by(object, x, y=None,
     
     horiz = True
     newCoords = []
-    for coord in  _canvas.coords(object):
-      if horiz:  
-        inc = x
-      else:      
-        inc = y
-      horiz = not horiz
-      
-      newCoords.append(coord + inc)
-      
-    _canvas.coords(object, *newCoords)
-    d_o_e(d_w)
+
+    # Hack: try-exept block here
+
+    try:
+      for coord in  _canvas.coords(object):
+        if horiz:  
+          inc = x
+        else:      
+          inc = y
+        horiz = not horiz
+        
+        newCoords.append(coord + inc)
+        
+      _canvas.coords(object, *newCoords)
+      d_o_e(d_w)
+    except:
+      print "",
     
 def writePostscript(filename):
   "Writes the current canvas to a postscript file."    

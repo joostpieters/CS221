@@ -1,5 +1,5 @@
-# baselineTeam.py
-# ---------------
+# baselineAgents.py
+# -----------------
 # Licensing Information: Please do not distribute or publish solutions to this
 # project. You are free to use and extend these projects for educational
 # purposes. The Pacman AI projects were developed at UC Berkeley, primarily by
@@ -7,33 +7,72 @@
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
 from captureAgents import CaptureAgent
+from captureAgents import AgentFactory
 import distanceCalculator
 import random, time, util
 from game import Directions
+import keyboardAgents
 import game
 from util import nearestPoint
 
-#################
-# Team creation #
-#################
+#############
+# FACTORIES #
+#############
 
-def createTeam(firstIndex, secondIndex, isRed,
-               first = 'OffensiveReflexAgent', second = 'DefensiveReflexAgent'):
-  """
-  This function should return a list of two agents that will form the
-  team, initialized using firstIndex and secondIndex as their agent
-  index numbers.  isRed is True if the red team is being created, and
-  will be False if the blue team is being created.
+NUM_KEYBOARD_AGENTS = 0
+class BaselineAgents(AgentFactory):
+  "Returns one keyboard agent and offensive reflex agents"
 
-  As a potentially helpful development aid, this function can take
-  additional string-valued keyword arguments ("first" and "second" are
-  such arguments in the case of this function), which will come from
-  the --redOpts and --blueOpts command-line arguments to capture.py.
-  For the nightly contest, however, your team will be created without
-  any extra arguments, so you should make sure that the default
-  behavior is what you want for the nightly contest.
-  """
-  return [eval(first)(firstIndex), eval(second)(secondIndex)]
+  def __init__(self, isRed, first='offense', second='defense', rest='offense'):
+    AgentFactory.__init__(self, isRed)
+    self.agents = [first, second]
+    self.rest = rest
+
+  def getAgent(self, index):
+    if len(self.agents) > 0:
+      return self.choose(self.agents.pop(0), index)
+    else:
+      return self.choose(self.rest, index)
+
+  def choose(self, agentStr, index):
+    if agentStr == 'keys':
+      global NUM_KEYBOARD_AGENTS
+      NUM_KEYBOARD_AGENTS += 1
+      if NUM_KEYBOARD_AGENTS == 1:
+        return keyboardAgents.KeyboardAgent(index)
+      elif NUM_KEYBOARD_AGENTS == 2:
+        return keyboardAgents.KeyboardAgent2(index)
+      else:
+        raise Exception('Max of two keyboard agents supported')
+    elif agentStr == 'offense':
+      return OffensiveReflexAgent(index)
+    elif agentStr == 'defense':
+      return DefensiveReflexAgent(index)
+    else:
+      raise Exception("No staff agent identified by " + agentStr)
+
+class AllOffenseAgents(AgentFactory):
+  "Returns one keyboard agent and offensive reflex agents"
+
+  def __init__(self, **args):
+    AgentFactory.__init__(self, **args)
+
+  def getAgent(self, index):
+    return OffensiveReflexAgent(index)
+
+class OffenseDefenseAgents(AgentFactory):
+  "Returns one keyboard agent and offensive reflex agents"
+
+  def __init__(self, **args):
+    AgentFactory.__init__(self, **args)
+    self.offense = False
+
+  def getAgent(self, index):
+    self.offense = not self.offense
+    if self.offense:
+      return OffensiveReflexAgent(index)
+    else:
+      return DefensiveReflexAgent(index)
 
 ##########
 # Agents #
@@ -152,3 +191,5 @@ class DefensiveReflexAgent(ReflexCaptureAgent):
 
   def getWeights(self, gameState, action):
     return {'numInvaders': -1000, 'onDefense': 100, 'invaderDistance': -10, 'stop': -100, 'reverse': -2}
+
+

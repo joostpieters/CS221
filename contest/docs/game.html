@@ -15,10 +15,17 @@
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
 </span><span style="color: blue; font-weight: bold">from </span>util <span style="color: blue; font-weight: bold">import </span><span style="font-weight: bold">*
-</span><span style="color: blue; font-weight: bold">import </span>time<span style="font-weight: bold">, </span>os
+</span><span style="color: blue; font-weight: bold">from </span>util <span style="color: blue; font-weight: bold">import </span>raiseNotDefined
+<span style="color: blue; font-weight: bold">import </span>time<span style="font-weight: bold">, </span>os
 <span style="color: blue; font-weight: bold">import </span>traceback
-  
-<span style="color: green; font-style: italic">#######################
+
+<span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
+  </span><span style="color: blue; font-weight: bold">import </span>boinc
+  _BOINC_ENABLED <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">True
+except</span><span style="font-weight: bold">:
+  </span>_BOINC_ENABLED <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">False
+
+</span><span style="color: green; font-style: italic">#######################
 # Parts worth reading #
 #######################
 
@@ -489,13 +496,7 @@
       </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentStates<span style="font-weight: bold">.</span>append<span style="font-weight: bold">( </span>AgentState<span style="font-weight: bold">( </span>Configuration<span style="font-weight: bold">( </span>pos<span style="font-weight: bold">, </span>Directions<span style="font-weight: bold">.</span>STOP<span style="font-weight: bold">), </span>isPacman<span style="font-weight: bold">) )
     </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_eaten <span style="font-weight: bold">= [</span><span style="color: blue; font-weight: bold">False for </span>a <span style="color: blue; font-weight: bold">in </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentStates<span style="font-weight: bold">]
 
-</span><span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
-  </span><span style="color: blue; font-weight: bold">import </span>boinc
-  _BOINC_ENABLED <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">True
-except</span><span style="font-weight: bold">:
-  </span>_BOINC_ENABLED <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">False
-  
-class </span>Game<span style="font-weight: bold">:
+</span><span style="color: blue; font-weight: bold">class </span>Game<span style="font-weight: bold">:
   </span><span style="color: darkred">"""
   The Game manages the control flow, soliciting actions from agents.
   """
@@ -513,10 +514,8 @@ class </span>Game<span style="font-weight: bold">:
     </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimes <span style="font-weight: bold">= [</span><span style="color: red">0 </span><span style="color: blue; font-weight: bold">for </span>agent <span style="color: blue; font-weight: bold">in </span>agents<span style="font-weight: bold">]
     </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimeWarnings <span style="font-weight: bold">= [</span><span style="color: red">0 </span><span style="color: blue; font-weight: bold">for </span>agent <span style="color: blue; font-weight: bold">in </span>agents<span style="font-weight: bold">]
     </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentTimeout <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">False
-    import </span>cStringIO
-    <span style="color: blue">self</span><span style="font-weight: bold">.</span>agentOutput <span style="font-weight: bold">= [</span>cStringIO<span style="font-weight: bold">.</span>StringIO<span style="font-weight: bold">() </span><span style="color: blue; font-weight: bold">for </span>agent <span style="color: blue; font-weight: bold">in </span>agents<span style="font-weight: bold">]
 
-  </span><span style="color: blue; font-weight: bold">def </span>getProgress<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">):
+  def </span>getProgress<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">):
     </span><span style="color: blue; font-weight: bold">if </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>gameOver<span style="font-weight: bold">:
       </span><span style="color: blue; font-weight: bold">return </span><span style="color: red">1.0
     </span><span style="color: blue; font-weight: bold">else</span><span style="font-weight: bold">:
@@ -532,19 +531,21 @@ class </span>Game<span style="font-weight: bold">:
   </span>OLD_STDOUT <span style="font-weight: bold">= </span><span style="color: blue">None
   </span>OLD_STDERR <span style="font-weight: bold">= </span><span style="color: blue">None
 
-  </span><span style="color: blue; font-weight: bold">def </span>mute<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">, </span>agentIndex<span style="font-weight: bold">):
+  </span><span style="color: blue; font-weight: bold">def </span>mute<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">):
     </span><span style="color: blue; font-weight: bold">if not </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>muteAgents<span style="font-weight: bold">: </span><span style="color: blue; font-weight: bold">return
     global </span>OLD_STDOUT<span style="font-weight: bold">, </span>OLD_STDERR
     <span style="color: blue; font-weight: bold">import </span>cStringIO
     OLD_STDOUT <span style="font-weight: bold">= </span>sys<span style="font-weight: bold">.</span>stdout
     OLD_STDERR <span style="font-weight: bold">= </span>sys<span style="font-weight: bold">.</span>stderr
-    sys<span style="font-weight: bold">.</span>stdout <span style="font-weight: bold">= </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentOutput<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">]
-    </span>sys<span style="font-weight: bold">.</span>stderr <span style="font-weight: bold">= </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentOutput<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">]
+    sys<span style="font-weight: bold">.</span>stdout <span style="font-weight: bold">= </span>cStringIO<span style="font-weight: bold">.</span>StringIO<span style="font-weight: bold">()
+    </span>sys<span style="font-weight: bold">.</span>stderr <span style="font-weight: bold">= </span>cStringIO<span style="font-weight: bold">.</span>StringIO<span style="font-weight: bold">()
 
   </span><span style="color: blue; font-weight: bold">def </span>unmute<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">):
     </span><span style="color: blue; font-weight: bold">if not </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>muteAgents<span style="font-weight: bold">: </span><span style="color: blue; font-weight: bold">return
     global </span>OLD_STDOUT<span style="font-weight: bold">, </span>OLD_STDERR
-    <span style="color: green; font-style: italic"># Revert stdout/stderr to originals
+    sys<span style="font-weight: bold">.</span>stdout<span style="font-weight: bold">.</span>close<span style="font-weight: bold">()
+    </span>sys<span style="font-weight: bold">.</span>stderr<span style="font-weight: bold">.</span>close<span style="font-weight: bold">()
+    </span><span style="color: green; font-style: italic"># Revert stdout/stderr to originals
     </span>sys<span style="font-weight: bold">.</span>stdout <span style="font-weight: bold">= </span>OLD_STDOUT
     sys<span style="font-weight: bold">.</span>stderr <span style="font-weight: bold">= </span>OLD_STDERR
 
@@ -561,15 +562,12 @@ class </span>Game<span style="font-weight: bold">:
     </span><span style="color: blue; font-weight: bold">for </span>i <span style="color: blue; font-weight: bold">in </span>range<span style="font-weight: bold">(</span>len<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agents<span style="font-weight: bold">)):
       </span>agent <span style="font-weight: bold">= </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agents<span style="font-weight: bold">[</span>i<span style="font-weight: bold">]
       </span><span style="color: blue; font-weight: bold">if not </span>agent<span style="font-weight: bold">:
-        </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">(</span>i<span style="font-weight: bold">)
         </span><span style="color: green; font-style: italic"># this is a null agent, meaning it failed to load
         # the other team wins
-        </span><span style="color: blue; font-weight: bold">print </span><span style="color: red">"Agent %d failed to load" </span><span style="font-weight: bold">% </span>i
-        <span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
         </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>i<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
         </span><span style="color: blue; font-weight: bold">return
       if </span><span style="font-weight: bold">(</span><span style="color: red">"registerInitialState" </span><span style="color: blue; font-weight: bold">in </span>dir<span style="font-weight: bold">(</span>agent<span style="font-weight: bold">)):
-        </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">(</span>i<span style="font-weight: bold">)
+        </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">()
         </span><span style="color: blue; font-weight: bold">if </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>catchExceptions<span style="font-weight: bold">:
           </span><span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
             </span>timed_func <span style="font-weight: bold">= </span>TimeoutFunction<span style="font-weight: bold">(</span>agent<span style="font-weight: bold">.</span>registerInitialState<span style="font-weight: bold">, </span>int<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>rules<span style="font-weight: bold">.</span>getMaxStartupTime<span style="font-weight: bold">(</span>i<span style="font-weight: bold">)))
@@ -585,8 +583,8 @@ class </span>Game<span style="font-weight: bold">:
               </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>i<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
               </span><span style="color: blue; font-weight: bold">return
           except </span>Exception<span style="font-weight: bold">,</span>data<span style="font-weight: bold">:
-            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>i<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">False</span><span style="font-weight: bold">)
             </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>i<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
             </span><span style="color: blue; font-weight: bold">return
         else</span><span style="font-weight: bold">:
           </span>agent<span style="font-weight: bold">.</span>registerInitialState<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state<span style="font-weight: bold">.</span>deepCopy<span style="font-weight: bold">())
@@ -603,7 +601,7 @@ class </span>Game<span style="font-weight: bold">:
       </span>skip_action <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">False
       </span><span style="color: green; font-style: italic"># Generate an observation of the state
       </span><span style="color: blue; font-weight: bold">if </span><span style="color: red">'observationFunction' </span><span style="color: blue; font-weight: bold">in </span>dir<span style="font-weight: bold">( </span>agent <span style="font-weight: bold">):
-        </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
+        </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">()
         </span><span style="color: blue; font-weight: bold">if </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>catchExceptions<span style="font-weight: bold">:
           </span><span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
             </span>timed_func <span style="font-weight: bold">= </span>TimeoutFunction<span style="font-weight: bold">(</span>agent<span style="font-weight: bold">.</span>observationFunction<span style="font-weight: bold">, </span>int<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>rules<span style="font-weight: bold">.</span>getMoveTimeout<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)))
@@ -615,8 +613,8 @@ class </span>Game<span style="font-weight: bold">:
             </span>move_time <span style="font-weight: bold">+= </span>time<span style="font-weight: bold">.</span>time<span style="font-weight: bold">() - </span>start_time
             <span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
           </span><span style="color: blue; font-weight: bold">except </span>Exception<span style="font-weight: bold">,</span>data<span style="font-weight: bold">:
-            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">False</span><span style="font-weight: bold">)
             </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
             </span><span style="color: blue; font-weight: bold">return
         else</span><span style="font-weight: bold">:
           </span>observation <span style="font-weight: bold">= </span>agent<span style="font-weight: bold">.</span>observationFunction<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state<span style="font-weight: bold">.</span>deepCopy<span style="font-weight: bold">())
@@ -626,7 +624,7 @@ class </span>Game<span style="font-weight: bold">:
 
       </span><span style="color: green; font-style: italic"># Solicit an action
       </span>action <span style="font-weight: bold">= </span><span style="color: blue">None
-      self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
+      self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">()
       </span><span style="color: blue; font-weight: bold">if </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>catchExceptions<span style="font-weight: bold">:
         </span><span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
           </span>timed_func <span style="font-weight: bold">= </span>TimeoutFunction<span style="font-weight: bold">(</span>agent<span style="font-weight: bold">.</span>getAction<span style="font-weight: bold">, </span>int<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>rules<span style="font-weight: bold">.</span>getMoveTimeout<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)) - </span>int<span style="font-weight: bold">(</span>move_time<span style="font-weight: bold">))
@@ -638,8 +636,8 @@ class </span>Game<span style="font-weight: bold">:
           </span><span style="color: blue; font-weight: bold">except </span>TimeoutFunctionException<span style="font-weight: bold">:
             </span><span style="color: blue; font-weight: bold">print </span><span style="color: red">"Agent %d timed out on a single move!" </span><span style="font-weight: bold">% </span>agentIndex
             <span style="color: blue">self</span><span style="font-weight: bold">.</span>agentTimeout <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">True
-            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
             </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
             </span><span style="color: blue; font-weight: bold">return
 
           </span>move_time <span style="font-weight: bold">+= </span>time<span style="font-weight: bold">.</span>time<span style="font-weight: bold">() - </span>start_time
@@ -650,21 +648,21 @@ class </span>Game<span style="font-weight: bold">:
             </span><span style="color: blue; font-weight: bold">if </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimeWarnings<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">] &gt; </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>rules<span style="font-weight: bold">.</span>getMaxTimeWarnings<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">):
               </span><span style="color: blue; font-weight: bold">print </span><span style="color: red">"Agent %d exceeded the maximum number of warnings: %d" </span><span style="font-weight: bold">% (</span>agentIndex<span style="font-weight: bold">, </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimeWarnings<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">])
               </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentTimeout <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">True
-              </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
               </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+              </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
 
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimes<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">] += </span>move_time
           <span style="color: green; font-style: italic">#print "Agent: %d, time: %f, total: %f" % (agentIndex, move_time, self.totalAgentTimes[agentIndex])
           </span><span style="color: blue; font-weight: bold">if </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimes<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">] &gt; </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>rules<span style="font-weight: bold">.</span>getMaxTotalTime<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">):
             </span><span style="color: blue; font-weight: bold">print </span><span style="color: red">"Agent %d ran out of time! (time: %1.2f)" </span><span style="font-weight: bold">% (</span>agentIndex<span style="font-weight: bold">, </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>totalAgentTimes<span style="font-weight: bold">[</span>agentIndex<span style="font-weight: bold">])
             </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agentTimeout <span style="font-weight: bold">= </span><span style="color: blue; font-weight: bold">True
-            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
             </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+            </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">, </span>quiet<span style="font-weight: bold">=</span><span style="color: blue; font-weight: bold">True</span><span style="font-weight: bold">)
             </span><span style="color: blue; font-weight: bold">return
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
         </span><span style="color: blue; font-weight: bold">except </span>Exception<span style="font-weight: bold">,</span>data<span style="font-weight: bold">:
-          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
           </span><span style="color: blue; font-weight: bold">return
       else</span><span style="font-weight: bold">:
         </span>action <span style="font-weight: bold">= </span>agent<span style="font-weight: bold">.</span>getAction<span style="font-weight: bold">(</span>observation<span style="font-weight: bold">)
@@ -676,9 +674,7 @@ class </span>Game<span style="font-weight: bold">:
         </span><span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state <span style="font-weight: bold">= </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state<span style="font-weight: bold">.</span>generateSuccessor<span style="font-weight: bold">( </span>agentIndex<span style="font-weight: bold">, </span>action <span style="font-weight: bold">)
         </span><span style="color: blue; font-weight: bold">except </span>Exception<span style="font-weight: bold">,</span>data<span style="font-weight: bold">:
-          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
-          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
           </span><span style="color: blue; font-weight: bold">return
       else</span><span style="font-weight: bold">:
         </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state <span style="font-weight: bold">= </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state<span style="font-weight: bold">.</span>generateSuccessor<span style="font-weight: bold">( </span>agentIndex<span style="font-weight: bold">, </span>action <span style="font-weight: bold">)
@@ -699,18 +695,22 @@ class </span>Game<span style="font-weight: bold">:
         </span>boinc<span style="font-weight: bold">.</span>set_fraction_done<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>getProgress<span style="font-weight: bold">())
 
     </span><span style="color: green; font-style: italic"># inform a learning agent of the game result
-    </span><span style="color: blue; font-weight: bold">for </span>agentIndex<span style="font-weight: bold">, </span>agent <span style="color: blue; font-weight: bold">in </span>enumerate<span style="font-weight: bold">(</span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agents<span style="font-weight: bold">):
+    </span><span style="color: blue; font-weight: bold">for </span>agent <span style="color: blue; font-weight: bold">in </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>agents<span style="font-weight: bold">:
       </span><span style="color: blue; font-weight: bold">if </span><span style="color: red">"final" </span><span style="color: blue; font-weight: bold">in </span>dir<span style="font-weight: bold">( </span>agent <span style="font-weight: bold">) :
         </span><span style="color: blue; font-weight: bold">try</span><span style="font-weight: bold">:
-          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
+          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>mute<span style="font-weight: bold">()
           </span>agent<span style="font-weight: bold">.</span>final<span style="font-weight: bold">( </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>state <span style="font-weight: bold">)
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
         </span><span style="color: blue; font-weight: bold">except </span>Exception<span style="font-weight: bold">,</span>data<span style="font-weight: bold">:
           </span><span style="color: blue; font-weight: bold">if not </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>catchExceptions<span style="font-weight: bold">: </span><span style="color: blue; font-weight: bold">raise
-          </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agentIndex<span style="font-weight: bold">)
           </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>unmute<span style="font-weight: bold">()
+          </span><span style="color: blue; font-weight: bold">print </span><span style="color: red">"Exception"</span><span style="font-weight: bold">,</span>data
+          <span style="color: blue">self</span><span style="font-weight: bold">.</span>_agentCrash<span style="font-weight: bold">(</span>agent<span style="font-weight: bold">.</span>index<span style="font-weight: bold">)
           </span><span style="color: blue; font-weight: bold">return
     </span><span style="color: blue">self</span><span style="font-weight: bold">.</span>display<span style="font-weight: bold">.</span>finish<span style="font-weight: bold">()
+
+
+
 
 </span>
   </pre>

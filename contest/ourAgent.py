@@ -1,6 +1,7 @@
 from captureAgents import AgentFactory
 from captureAgents import CaptureAgent
 import distanceCalculator
+import defenseModule
 import holdTheLineModule
 import operator
 import opponentModeler
@@ -124,17 +125,30 @@ class ourAgent(CaptureAgent):
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies) #infModule checks to make sure we don't do this twice
     #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
- 
+    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer) 
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
     self.isRed = isRed
 
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    return self.holdTheLineModule.chooseAction(gameState)
+    enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
+    enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
+    if max(enemiesAttacking): #this means one of them is on our side
+      print "They're attacking man the stockade " + str(enemyMLEs)
+      return self.defenseModule.chooseAction(gameState)
+    else:
+      return self.holdTheLineModule.chooseAction(gameState)
   
   def getWhoMovedLast(self, gameState): #this is buggy since we might be first to move.    
     return (self.index-1) % (len(self.friends) + len(self.enemies))
+
+  def displayDistributionsOverSquares(self, squares):
+    map = util.Counter()
+    for square in squares:
+      map[square] = 1
+    #print "Squares we're showing are " + str(squares)
+    self.displayDistributionsOverPositions([map]) 
  
   def updateInference(self, gameState):
     self.inferenceModule.updateBasedOnMovement(self.getWhoMovedLast(gameState), gameState)

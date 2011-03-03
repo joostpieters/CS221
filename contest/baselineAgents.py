@@ -36,7 +36,6 @@ class BaselineAgents(AgentFactory):
       return self.choose(self.rest, index)
 
   def choose(self, agentStr, index):
-    print "agent str is: " + agentStr  + 'index is ' + str(index)
     if agentStr == 'keys':
       global NUM_KEYBOARD_AGENTS
       NUM_KEYBOARD_AGENTS += 1
@@ -47,7 +46,6 @@ class BaselineAgents(AgentFactory):
       else:
         raise Exception('Max of two keyboard agents supported')
     elif agentStr == 'offense':
-      print "Here comes an offense agent11111"
       return OffensiveReflexAgent(index)
     elif agentStr == 'defense':
       return DefensiveReflexAgent(index)

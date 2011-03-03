@@ -33,17 +33,17 @@ class holdTheLineModule(module.agentModule):
     else:
       return successor
   
-  def matchUp(self, theirpos, ourpos):
-    return min([self.getMazeDistance(theirpos,pos) - self.getOurSideMazeDistance(ourpos,pos) for pos in self.inferenceModule.edge])
+  def matchUp(self, theirpos, ourpos,gameState):
+    return min([self.getMazeDistance(theirpos,pos) - self.getOurSideMazeDistance(ourpos,pos) for pos in self.getOurFood(gameState)+self.inferenceModule.edge])
 
-  def findWeakestLink(self, enemyPositions, ourPositions):
+  def findWeakestLink(self, enemyPositions, ourPositions,gameState):
     if len(enemyPositions) == 0:
-      return 1e10
+      return 0
     bestvalue = -1e10
     for i in range(0,len(ourPositions)):
       newOurPos = ourPositions[:]
       newOurPos.remove(ourPositions[i]) #this is ok even if two pacmen are hanging out on same square
-      thisstrat = min(self.findWeakestLink(enemyPositions[1:], newOurPos), self.matchUp(enemyPositions[0],ourPositions[i]))
+      thisstrat = min(self.findWeakestLink(enemyPositions[1:], newOurPos,gameState), self.matchUp(enemyPositions[0],ourPositions[i],gameState))
       if thisstrat > bestvalue:
         bestvalue = thisstrat
     return bestvalue
@@ -51,15 +51,14 @@ class holdTheLineModule(module.agentModule):
   def distanceToSquares(self,ourpositions,squares):
     totalcost = 0
     for border in squares:
-      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions]) + sum([self.getOurSideMazeDistance(border,p) for p in ourpositions])/10.0
+      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions]) + sum([self.getOurSideMazeDistance(border,p) for p in ourpositions])/5.0
     return totalcost
 
   def evaluateBoard(self, gameState):
     enemyPositions = self.inferenceModule.getEnemyMLEs()
     ourPositions = [gameState.getAgentPosition(index) for index in self.friends]
-    print self.getOurFood(gameState)
     #return self.findWeakestLink(enemyPositions.values(), ourPositions), self.distanceToSquares(ourPositions,self.inferenceModule.edge)
-    return self.findWeakestLink(enemyPositions.values(), ourPositions), self.distanceToSquares(ourPositions,self.getOurFood(gameState)+self.inferenceModule.edge)
+    return self.findWeakestLink(enemyPositions.values(), ourPositions,gameState), self.distanceToSquares(ourPositions,self.inferenceModule.edge)
 
   def showListofPositions(self, list):
     weights = util.Counter()

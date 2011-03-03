@@ -5,8 +5,12 @@ class agentModule():
     self.isRed=isRed
     self.index=index
     self.distancer = distancer
-    print 'fuck index is ' + str(index)
     self.inferenceModule = inferenceModule
+
+  def getOurFood(self,gameState):
+    if self.isRed:
+      return gameState.getRedFood().asList(True)
+    return gameState.getBlueFood().asList(True)
 
   def whereAreWe(self, gameState):
     return gameState.getAgentState(self.index).getPosition()

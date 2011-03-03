@@ -2,9 +2,7 @@ import capture
 import module
 
 class holdTheLineModule(module.agentModule):
-
   def chooseAction(self, gameState):
-    print 'Choosing action old school style: ' + str(self.index)
     actions = gameState.getLegalActions(self.index)
 
     bestaction = None
@@ -20,7 +18,7 @@ class holdTheLineModule(module.agentModule):
         besttiebreaker = tiebreaker
         bestranking = actionranking
 
-    print 'Our action ' + str(action) + ' our score ' + str(bestranking) + ' our tiebreaker ' + str(besttiebreaker)
+    #print 'Our action ' + str(action) + ' our score ' + str(bestranking) + ' our tiebreaker ' + str(besttiebreaker)
     return bestaction
 
   def getSuccessor(self, gameState, action):
@@ -50,16 +48,18 @@ class holdTheLineModule(module.agentModule):
         bestvalue = thisstrat
     return bestvalue
 
-  def distanceToEdge(self,ourpositions):
+  def distanceToSquares(self,ourpositions,squares):
     totalcost = 0
-    for border in self.inferenceModule.edge:
+    for border in squares:
       totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions]) + sum([self.getOurSideMazeDistance(border,p) for p in ourpositions])/10.0
     return totalcost
 
   def evaluateBoard(self, gameState):
     enemyPositions = self.inferenceModule.getEnemyMLEs()
     ourPositions = [gameState.getAgentPosition(index) for index in self.friends]
-    return self.findWeakestLink(enemyPositions.values(), ourPositions), self.distanceToEdge(ourPositions)
+    print self.getOurFood(gameState)
+    #return self.findWeakestLink(enemyPositions.values(), ourPositions), self.distanceToSquares(ourPositions,self.inferenceModule.edge)
+    return self.findWeakestLink(enemyPositions.values(), ourPositions), self.distanceToSquares(ourPositions,self.getOurFood(gameState)+self.inferenceModule.edge)
 
   def showListofPositions(self, list):
     weights = util.Counter()

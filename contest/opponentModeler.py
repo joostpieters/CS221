@@ -5,13 +5,21 @@ class opponentModel():
   def __init__(self,inferenceModel):
     self.iModel = inferenceModel
   
-  def updatePositionsBasedOnSensor(self, gameState,ourAgentPos):
+  def updatePositionsBasedOnSensor(self, gameState, ourAgentPos):
     agentdistances = gameState.getAgentDistances()
+    ourAgentEaten = (ourAgentPos == gameState.getInitialAgentPosition(self.iModel.index))
     for enemy in self.iModel.enemypositions: #this is iterating over the keys to a map
-      if gameState.getAgentPosition(enemy):
+      enemyPos = gameState.getAgentPosition(enemy)
+      if enemyPos:
         self.iModel.enemypositions[enemy] = util.Counter()
         self.iModel.enemypositions[enemy][gameState.getAgentPosition(enemy)] = 1
+	self.iModel.lastKnownDistances[enemy] = util.manhattanDistance(enemyPos, ourAgentPos)
       else:
+        if (not ourAgentEaten and self.iModel.lastKnownDistances[enemy] <= capture.SIGHT_RANGE - 2): #enemy was eaten, otherwise they'd be observable
+          print "We think an enemy was eaten"
+  	  self.iModel.enemypositions[enemy] = util.Counter()
+          self.iModel.enemypositions[enemy][gameState.getInitialAgentPosition(enemy)] = 1
+          self.iModel.lastKnownDistances[enemy] = 99999
         observeddistance = agentdistances[enemy]
         for pos in self.iModel.enemypositions[enemy]:
           if capture.SIGHT_RANGE < util.manhattanDistance(pos,ourAgentPos):

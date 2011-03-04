@@ -23,10 +23,10 @@ NUM_KEYBOARD_AGENTS = 0
 class BaselineAgents(AgentFactory):
   "Returns one keyboard agent and offensive reflex agents"
 
-  def __init__(self, isRed, first='offense', second='defense', rest='offense'):
-    print 'THIS CODE JUST GOT CALLED'
+  def __init__(self, isRed, first='offense', second='offense', rest='offense'):
     AgentFactory.__init__(self, isRed)
-    self.agents = [first, second]
+    #self.agents = [first, second]
+    self.agents = ['offense', 'offense']
     self.rest = rest
 
   def getAgent(self, index):
@@ -96,6 +96,7 @@ class ReflexCaptureAgent(CaptureAgent):
 
     maxValue = max(values)
     bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+#    print 'bestactions: ' + str(bestActions) + ' achieve value ' + str(maxValue)
 
     return random.choice(bestActions)
 

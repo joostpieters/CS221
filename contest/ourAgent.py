@@ -1,6 +1,8 @@
 from captureAgents import AgentFactory
 from captureAgents import CaptureAgent
 import distanceCalculator
+import defenseModule
+import holdTheLineModule
 import operator
 import opponentModeler
 import random, time, util
@@ -51,18 +53,23 @@ class inferenceModule():
 
     return ourborder
 
-  def initialize(self, gameState, isRed, enemies):
+  def initialize(self, gameState, isRed, enemies, index):
     if self.hasBeenInitialized:
       return
     self.legalPositions = [p for p in gameState.getWalls().asList(False) if p[1] >0]
     self.edge = self.analyzeMap(isRed,self.legalPositions,gameState.data.layout)
     self.hasBeenInitialized = True
-
+    self.index = index
     self.enemypositions = {}
-
+    self.lastKnownDistances = { self.index : gameState.getInitialAgentPosition(self.index) }
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
        self.enemypositions[enemy][gameState.getInitialAgentPosition(enemy)] = 1
+       self.lastKnownDistances[enemy] = 999999
+
+
+  def getOurSideDistances(self, posa, posb):
+    return self.ourSideDistancer.getDistance(posa, posb)
   
   def getInfoOnEnemyAgent(self, agentNumber):
     return self.enemypositions[agentNumber]
@@ -75,7 +82,7 @@ class inferenceModule():
     return MLEestimators      
   
   def restrictBasedOnSensor(self,gameState, ourAgentPos):
-    self.opponentModel.updatePositionsBasedOnSensor(gameState,ourAgentPos)
+    self.opponentModel.updatePositionsBasedOnSensor(gameState, ourAgentPos)
       
   def updateBasedOnMovement(self, agentIndex, gameState): 
     self.opponentModel.updateBasedOnMovement(agentIndex, gameState)
@@ -121,21 +128,35 @@ class ourAgent(CaptureAgent):
     else:
       self.friends = gameState.getBlueTeamIndices()
       self.enemies = gameState.getRedTeamIndices()
- 
-    self.inferenceModule.initialize(gameState, self.isRed, self.enemies) #infModule checks to make sure we don't do this twice
-    self.agentModule = attackModule.AttackModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
-    #self.holdTheLineModule = holdTheLineModule.holdTheLineModule(self, self.friends, self.enemies, self.isRed, self.inferenceModule)
- 
+
+    self.inferenceModule.initialize(gameState, self.isRed, self.enemies, self.index)#infModule checks to make sure we don't do this twice
+    #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
+    self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
+    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
     self.isRed = isRed
 
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    return self.agentModule.chooseAction(gameState)
+    self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
+    enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
+    enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
+    if max(enemiesAttacking): #this means one of them is on our side
+     # print "They're attacking man the stockade " + str(enemyMLEs)
+      return self.defenseModule.chooseAction(gameState)
+    else:
+      return self.holdTheLineModule.chooseAction(gameState)
   
   def getWhoMovedLast(self, gameState): #this is buggy since we might be first to move.    
     return (self.index-1) % (len(self.friends) + len(self.enemies))
+
+  def displayDistributionsOverSquares(self, squares):
+    map = util.Counter()
+    for square in squares:
+      map[square] = 1
+    #print "Squares we're showing are " + str(squares)
+    self.displayDistributionsOverPositions([map]) 
  
   def updateInference(self, gameState):
     self.inferenceModule.updateBasedOnMovement(self.getWhoMovedLast(gameState), gameState)

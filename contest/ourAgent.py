@@ -18,9 +18,7 @@ class inferenceModule():
     self.opponentModel = opponentModeler.opponentModel(self)
   
   def isOnOurSide(self,pos):
-    if pos in self.ourside:
-      return True
-    return False
+    return pos in self.ourside
     
   def analyzeMap(self, isRed, legalpositions, layout):
     self.width = max([p[0] for p in legalpositions])
@@ -125,7 +123,8 @@ class ourAgent(CaptureAgent):
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies) #infModule checks to make sure we don't do this twice
     #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
-    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer) 
+    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
+
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
     self.isRed = isRed
@@ -133,6 +132,7 @@ class ourAgent(CaptureAgent):
   def chooseAction(self,gameState):
     self.updateInference(gameState)
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
+    #self.displayDistributionsOverSquares(enemyMLEs)
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
     if max(enemiesAttacking): #this means one of them is on our side
       print "They're attacking man the stockade " + str(enemyMLEs)
@@ -153,3 +153,4 @@ class ourAgent(CaptureAgent):
   def updateInference(self, gameState):
     self.inferenceModule.updateBasedOnMovement(self.getWhoMovedLast(gameState), gameState)
     self.inferenceModule.restrictBasedOnSensor(gameState, self.whereAreWe(gameState))
+    self.displayDistributionsOverSquares(self.inferenceModule.getEnemyMLEs().values())

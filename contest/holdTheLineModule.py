@@ -7,15 +7,13 @@ class holdTheLineModule(module.agentModule):
 
     bestaction = None
     bestranking = -1e10
-    besttiebreaker = -1e10
     for action in actions:
       newState=gameState.generateSuccessor(self.index,action)
       if not self.inferenceModule.isOnOurSide(self.whereAreWe(newState)):
         continue
-      actionranking,tiebreaker = self.evaluateBoard(newState)
-      if actionranking>bestranking or (actionranking==bestranking and besttiebreaker>tiebreaker):
+      actionranking = self.evaluateBoard(newState)
+      if actionranking>bestranking:
         bestaction = action
-        besttiebreaker = tiebreaker
         bestranking = actionranking
 
     #print 'Our action ' + str(action) + ' our score ' + str(bestranking) + ' our tiebreaker ' + str(besttiebreaker)
@@ -48,17 +46,28 @@ class holdTheLineModule(module.agentModule):
         bestvalue = thisstrat
     return bestvalue
 
-  def distanceToSquares(self,ourpositions,squares):
+  def minDistanceToSquares(self,ourpositions,squares):
     totalcost = 0
     for border in squares:
-      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions]) + sum([self.getOurSideMazeDistance(border,p) for p in ourpositions])/5.0
-    return totalcost
+      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions])
+    return totalcost/float(len(squares))
+
+  def avgDistanceToSquares(self,ourpositions,squares):
+    totalcost = 0
+    for border in squares:
+      for p in ourpositions:
+        totalcost = totalcost + self.getOurSideMazeDistance(border,p)
+    return totalcost/float(len(squares)*len(ourpositions))
 
   def evaluateBoard(self, gameState):
     enemyPositions = self.inferenceModule.getEnemyMLEs()
     ourPositions = [gameState.getAgentPosition(index) for index in self.friends]
-    #return self.findWeakestLink(enemyPositions.values(), ourPositions), self.distanceToSquares(ourPositions,self.inferenceModule.edge)
-    return self.findWeakestLink(enemyPositions.values(), ourPositions,gameState), self.distanceToSquares(ourPositions,self.inferenceModule.edge)
+
+    weakestLinkPleasure =  self.findWeakestLink(enemyPositions.values(), ourPositions,gameState)
+    teamMinDistanceToEdgeViolation = self.minDistanceToSquares(ourPositions,self.inferenceModule.edge)
+    teamAvgDistanceToEdgeViolation = self.avgDistanceToSquares(ourPositions,self.inferenceModule.edge)
+
+    return  5*weakestLinkPleasure- 3*teamMinDistanceToEdgeViolation-teamAvgDistanceToEdgeViolation
 
   def showListofPositions(self, list):
     weights = util.Counter()

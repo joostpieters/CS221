@@ -7,6 +7,7 @@ import random, time, util
 from game import Directions
 import game
 import module
+import attackModule
 from util import nearestPoint
 
 
@@ -35,6 +36,10 @@ class inferenceModule():
     sideToWallOff = self.halfway + x
     for i in range(layout.height):
       ourSideLayout.walls[sideToWallOff][i]=True
+      
+
+    self.distancer = distanceCalculator.Distancer(layout)
+    self.distancer.getMazeDistances()
 
     self.ourSideDistancer = distanceCalculator.Distancer(ourSideLayout)
     self.ourSideDistancer.getMazeDistances()
@@ -118,7 +123,7 @@ class ourAgent(CaptureAgent):
       self.enemies = gameState.getRedTeamIndices()
  
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies) #infModule checks to make sure we don't do this twice
-    self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
+    self.agentModule = attackModule.AttackModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
     #self.holdTheLineModule = holdTheLineModule.holdTheLineModule(self, self.friends, self.enemies, self.isRed, self.inferenceModule)
  
   def initialize(self, iModel, isRed):

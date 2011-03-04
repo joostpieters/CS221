@@ -133,9 +133,8 @@ class ourAgent(CaptureAgent):
 
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
+    #self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
-    #self.displayDistributionsOverSquares(enemyMLEs)
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
     if max(enemiesAttacking): #this means one of them is on our side
      # print "They're attacking man the stockade " + str(enemyMLEs)

@@ -6,14 +6,11 @@ from game import Directions
 import ourAgent
 import util
 import random
+
 class opponentModel():
   def __init__(self,inferenceModel):
     self.iModel = inferenceModel
   
-  def noisyDistance(self, pos1, pos2):
-    return int(util.manhattanDistance(pos1, pos2) + random.choice(SONAR_NOISE_VALUES))
-
-
   def updatePositionsBasedOnSensor(self, gameState, ourAgentPos):
     agentdistances = gameState.getAgentDistances()
     ourAgentEaten = (ourAgentPos == gameState.getInitialAgentPosition(self.iModel.index))
@@ -24,7 +21,7 @@ class opponentModel():
         self.iModel.enemypositions[enemy][gameState.getAgentPosition(enemy)] = 1
 	self.iModel.lastKnownDistances[enemy] = util.manhattanDistance(enemyPos, ourAgentPos)
       else:
-        if (not ourAgentEaten and self.iModel.lastKnownDistances[enemy] <= capture.SIGHT_RANGE - 2): #enemy was eaten, otherwise they'd be observable
+        if (not ourAgentEaten and self.iModel.lastKnownDistances[enemy] <= capture.SIGHT_RANGE - 3): #enemy was eaten, otherwise they'd be observable
           print "We think an enemy was eaten"
   	  self.iModel.enemypositions[enemy] = util.Counter()
           self.iModel.enemypositions[enemy][gameState.getInitialAgentPosition(enemy)] = 1

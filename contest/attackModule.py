@@ -24,13 +24,15 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
       return random.choice(bestActions)
 
   def getStateValue(self, gameState):
-      if(self.isRed):
-          foodDistances = self.distanceToFood(gameState, False)
-          return 100 - 5000 * self.getFoodCount(gameState, False) - pow(foodDistances[0], 2.0) - foodDistances[1] + 7 * self.distanceApart(gameState) - 100 * pow(1/self.distanceToEnemies(gameState), 2.0)
-      else:
-          foodDistances = self.distanceToFood(gameState, True)
-          return 100 - 5000 * self.getFoodCount(gameState, True) - pow(foodDistances[0], 2.0) - foodDistances[1] + 7 * self.distanceApart(gameState), 10 - 100 * pow(1/self.distanceToEnemies(gameState), 2.0)
-      
+      foodDistances = self.distanceToFood(gameState, False) if self.isRed else self.distanceToFood(gameState, True)
+      nearestFoodVal = self.heuristicWeights['attackModule_nearestFoodCoeff'] * pow(foodDistances[0], self.heuristicWeights['attackModule_nearestFoodPower'])
+      totalFoodVal = self.heuristicWeights['attackModule_totalFoodCoeff'] * foodDistances[1]
+      foodCount = self.getFoodCount(gameState, False) if self.isRed else self.getFoodCount(gameState, True)
+      numFoodsVal = self.heuristicWeights['attackModule_foodEatenReward'] * (20 - self.getFoodCount(gameState, False))
+      distanceApartVal = self.heuristicWeights['attackModule_distanceApartReward'] * self.distanceApart(gameState)
+      enemyDistanceVal = self.heuristicWeights['attackModule_distanceToEnemies'] * self.distanceToEnemies(gameState)
+      return numFoodsVal - nearestFoodVal - totalFoodVal + distanceApartVal + enemyDistanceVal
+            
   def getFoodCount(self, gameState, red):
       foodCounter = 0
       if(red):
@@ -61,7 +63,7 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
       for i in range(foodGrid.width):
           for j in range(foodGrid.height):
               if(foodGrid[i][j]):
-                  distance = self.inferenceModule.distancer.getDistance(ourPos, (i,j))
+                  distance = self.distancer.getDistance(ourPos, (i,j))
                   totalDistance += distance
                   if(distance < minDistance):
                       minDistance = distance

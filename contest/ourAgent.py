@@ -13,6 +13,9 @@ from minimaxModule import MinimaxModule
 import module
 import attackModule
 from util import nearestPoint
+import particleSwarmOptimizer
+from particleSwarmOptimizer import ParticleSwarmOptimizable
+import weightsConfig
 
 def zeros(k):
   zeros = ''
@@ -66,6 +69,7 @@ class inferenceModule():
     self.hasBeenInitialized = True
     self.index = index
     self.enemypositions = {}
+    self.isRed = isRed
     self.lastKnownDistances = { self.index : gameState.getInitialAgentPosition(self.index) }
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
@@ -117,11 +121,28 @@ def createTeam(firstIndex, secondIndex, isRed):
 	agents[i].initialize(iModel, isRed)
 
   return agents
- 
-class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate):
+
+class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOptimizable):
   """
   A base class for reflex agents that chooses score-maximizing actions
   """
+  
+  ######################################
+  #####ParticleSwarmOptimizable#########
+  ######################################
+  def getDefaultWeights(self):
+      return weightsConfig.WeightsMap
+  
+  def getWeightMin(self, weightName):
+      return weightsConfig.WeightsRangeMap[weightName][0]
+  
+  def getWeightMax(self, weightName):
+      return weightsConfig.WeightsRangeMap[weightName][1]
+  
+  def setWeights(self, weights):
+      self.heuristicWeights = weights
+  ######################################
+  
   def whereAreWe(self, gameState):
     return gameState.getAgentState(self.index).getPosition()
 
@@ -136,12 +157,14 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate):
 
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies, self.index)#infModule checks to make sure we don't do this twice
     #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
-    self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
-    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
-    self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
+    self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule,self.distancer)
+    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule,self.distancer)
+    self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule,self.distancer)
+    
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
     self.isRed = isRed
+    self.setWeights(self.getDefaultWeights())
 
   def getOurPositionMapping(self,gameState):
     mapping = {}
@@ -214,8 +237,8 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate):
  
   def getStateValue(self,gameState):
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
+    self.displayDistributionsOverSquares(enemyMLEs)
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
-
     attackingEnemies = []
     notAttackingEnemies = []
     for i in range(len(enemyMLEs)):

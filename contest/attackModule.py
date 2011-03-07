@@ -3,16 +3,11 @@ from module import agentModule
 import minimaxModule
 from minimaxModule import MinimaxModule
 import random
+import time
 
 class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
 
   def chooseAction(self, gameState):
-      redFoodCounter = 0
-      redFood = gameState.getRedFood()
-      for foodRow in redFood:
-          for foodItem in foodRow:
-              if(foodItem): redFoodCounter += 1
-      print(str(redFoodCounter) + " foods")
       minimaxMod = MinimaxModule(self)
       minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.1)
       bestActions = []
@@ -30,9 +25,11 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
 
   def getStateValue(self, gameState):
       if(self.isRed):
-          return 100 - 50 * self.getFoodCount(gameState, False) - 2 * self.distanceToNearestFood(gameState, False) + self.distanceApart(gameState)
+          foodDistances = self.distanceToFood(gameState, False)
+          return 100 - 5000 * self.getFoodCount(gameState, False) - pow(foodDistances[0], 2.0) - foodDistances[1] + 7 * self.distanceApart(gameState) - 100 * pow(1/self.distanceToEnemies(gameState), 2.0)
       else:
-          return 100 - 50 * self.getFoodCount(gameState, True) - 2 * self.distanceToNearestFood(gameState, True) + self.distanceApart(gameState)
+          foodDistances = self.distanceToFood(gameState, True)
+          return 100 - 5000 * self.getFoodCount(gameState, True) - pow(foodDistances[0], 2.0) - foodDistances[1] + 7 * self.distanceApart(gameState), 10 - 100 * pow(1/self.distanceToEnemies(gameState), 2.0)
       
   def getFoodCount(self, gameState, red):
       foodCounter = 0
@@ -46,9 +43,9 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
       return foodCounter
 
   """
-  Returns our distance to the nearest food
+  Returns our distance to the nearest food and the total distance to all foods as tuple
   """
-  def distanceToNearestFood(self, gameState, red):
+  def distanceToFood(self, gameState, red):
       ourPos = gameState.getAgentPosition(self.index)
       if(ourPos == None): #if we can't find ourself, it is time to panic
           return -1
@@ -60,14 +57,16 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
           
       
       minDistance = 1e10
+      totalDistance = 0
       for i in range(foodGrid.width):
           for j in range(foodGrid.height):
               if(foodGrid[i][j]):
                   distance = self.inferenceModule.distancer.getDistance(ourPos, (i,j))
+                  totalDistance += distance
                   if(distance < minDistance):
                       minDistance = distance
       
-      return minDistance
+      return (minDistance, totalDistance)
   
   """
   Returns the net distance between our agents
@@ -90,6 +89,28 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
               if(agentPos == None):
                   continue # we can't deal with it
               totalDist += self.inferenceModule.distancer.getDistance(ourPos, agentPos)
+              
+      return totalDist
+  
+  def distanceToEnemies(self, gameState):
+      ourPos = gameState.getAgentPosition(self.index)
+      if(ourPos == None): #if we can't find ourself, it is time to panic
+          return -1
+      
+      if(self.isRed):
+          agents = gameState.getBlueTeamIndices()
+      else:
+          agents = gameState.getRedTeamIndices()
+      
+      totalDist = 0
+      
+      for agentIndex in agents:
+          if(agentIndex != self.index):
+              agentPos = gameState.getAgentPosition(agentIndex)
+              if(agentPos == None):
+                  totalDist += 5
+              else:
+                  totalDist += self.inferenceModule.distancer.getDistance(ourPos, agentPos)
               
       return totalDist
 

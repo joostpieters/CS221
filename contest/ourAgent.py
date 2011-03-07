@@ -11,6 +11,7 @@ import game
 import module
 import attackModule
 from util import nearestPoint
+import cellLayout
 
 
 class inferenceModule():
@@ -121,6 +122,7 @@ class ourAgent(CaptureAgent):
     return gameState.getAgentState(self.index).getPosition()
 
   def registerInitialState(self, gameState):
+    cellLayout.CellLayout(gameState.data.layout)
     CaptureAgent.registerInitialState(self,gameState)
     if self.isRed:
       self.friends = gameState.getRedTeamIndices()
@@ -133,15 +135,17 @@ class ourAgent(CaptureAgent):
     #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
     self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
+    self.attackModule = attackModule.AttackModule ( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer )
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
     self.isRed = isRed
 
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
+    #self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
+    return self.attackModule.chooseAction(gameState)
     if max(enemiesAttacking): #this means one of them is on our side
      # print "They're attacking man the stockade " + str(enemyMLEs)
       return self.defenseModule.chooseAction(gameState)

@@ -1,8 +1,14 @@
 import capture
 import module
 
+def secondMin(list):
+  try:
+    return sorted(list)[1]
+  except:
+    return 0
+
 class holdTheLineModule(module.agentModule):
-  def chooseAction(self, gameState):
+  def chooseAction(self, gameState, ourIndices,ourEnemies):
     actions = gameState.getLegalActions(self.index)
 
     bestaction = None
@@ -11,12 +17,12 @@ class holdTheLineModule(module.agentModule):
       newState=gameState.generateSuccessor(self.index,action)
       if not self.inferenceModule.isOnOurSide(self.whereAreWe(newState)):
         continue
-      actionranking = self.evaluateBoard(newState)
+      actionranking = self.evaluateBoard(newState, ourIndices, ourEnemies)
       if actionranking>bestranking:
         bestaction = action
         bestranking = actionranking
 
-    print 'Our action ' + str(action) + ' our score ' + str(bestranking)
+    #print 'Our action ' + str(action) + ' our score ' + str(bestranking)
     return bestaction
 
   def getSuccessor(self, gameState, action):
@@ -31,12 +37,6 @@ class holdTheLineModule(module.agentModule):
     else:
       return successor
   
-  def avgMinDistanceToSquares(self,ourpositions,squares):
-    totalcost = 0
-    for border in squares:
-      totalcost = totalcost + min([self.getOurSideMazeDistance(border,p) for p in ourpositions])
-    return totalcost/float(len(squares))
-
   def maxMinDistanceToSquares(self, ourpositions, squares):
     currentworst = -1e10
     for square in squares:
@@ -54,6 +54,15 @@ class holdTheLineModule(module.agentModule):
         distances.append(min([self.getMazeDistance(square,p) for p in agentPositions]))
     return distances
   
+  def getSecondMinDistanceToSquares(self,agentPositions, squares,isUs):
+    distances = []
+    for square in squares:
+      if isUs:
+        distances.append(secondMin([self.getOurSideMazeDistance(square,p) for p in agentPositions]))
+      else:
+        distances.append(secondMin([self.getMazeDistance(square,p) for p in agentPositions]))
+    return distances
+  
   def avgDistanceToSquares(self,ourpositions,squares):
     totalcost = 0
     for border in squares:
@@ -69,30 +78,43 @@ class holdTheLineModule(module.agentModule):
         amountWorse =thisViolation
     return amountWorse
 
+  def ourAvgAvgDistanceToSquares(self,ourP, squares):
+    cost = 0
+    for p in ourP:
+      for square in squares:
+        cost +=self.getOurSideMazeDistance(p, square)
+    return cost / float(len(ourP)*len(squares))
+ 
   def averageSquaredViolation(self,ours, theirs):
     violation = 0
     for i in range(len(ours)):
       violation = violation+max(0,ours[i]-theirs[i])**2
     return violation/float(len(ours))
 
-  def evaluateBoard(self, gameState):
-    enemyPositions = self.inferenceModule.getEnemyMLEs().values()
-    ourPositions = [gameState.getAgentPosition(index) for index in self.friends]
+  def evaluateBoard(self, gameState,ourIndices,enemyPositions):
+    ourPositions = [gameState.getAgentPosition(index) for index in ourIndices]
 
     relevantSquares = self.inferenceModule.edge # + self.getOurFood(gameState)
   
-    teamavgMinDistanceToEdgeViolation = self.avgMinDistanceToSquares(ourPositions,relevantSquares)
+    ourAvgAvgDistanceToEdgeViolation = self.ourAvgAvgDistanceToSquares(ourPositions,relevantSquares)
     
     ourDistancesToSquares = self.getMinDistanceToSquares(ourPositions,relevantSquares,True)
     theirDistancesToSquares = self.getMinDistanceToSquares(enemyPositions,relevantSquares,False)
+    
+    teamavgMinDistanceToEdgeViolation = sum(ourDistancesToSquares)/len(ourDistancesToSquares)
+
     opponentMaxViolation = self.maxAmountWorse(ourDistancesToSquares,theirDistancesToSquares)
     opponentAverageSquaredViolation = self.averageSquaredViolation(ourDistancesToSquares,theirDistancesToSquares)
 
-    ourAverageDistanceToSquaresViolation = self.avgDistanceToSquares(ourPositions,relevantSquares)
+    ourSecondDistancesToSquares = self.getSecondMinDistanceToSquares(ourPositions,relevantSquares,True)
+    theirSecondDistancesToSquares = self.getSecondMinDistanceToSquares(enemyPositions,relevantSquares,False)
+   
+    opponentSecondMaxViolation = self.maxAmountWorse(ourSecondDistancesToSquares,theirSecondDistancesToSquares) 
+  
+    ourMaxDistance = max(ourDistancesToSquares)
 
-    print opponentAverageSquaredViolation 
-    
-    return   -2*opponentMaxViolation - 1*opponentAverageSquaredViolation-teamavgMinDistanceToEdgeViolation-3*max(ourDistancesToSquares) - .5*teamavgMinDistanceToEdgeViolation - .5 * ourAverageDistanceToSquaresViolation
+    ourAverageDistanceToSquaresViolation = self.avgDistanceToSquares(ourPositions,relevantSquares)
+    return   -5*opponentMaxViolation - .1*opponentAverageSquaredViolation-3*ourMaxDistance - 3 * ourAverageDistanceToSquaresViolation - .5*teamavgMinDistanceToEdgeViolation - 3*max(0,opponentSecondMaxViolation)
 
   def showListofPositions(self, list):
     weights = util.Counter()

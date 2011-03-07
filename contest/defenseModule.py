@@ -2,8 +2,9 @@ import capture
 import module
 def avg(list):
   return float(sum(list)) / len(list)
+
 class defenseModule(module.agentModule):
-  def chooseAction(self, gameState):
+  def chooseAction(self, gameState, defensiveMatching,attackingEnemies):
     actions = gameState.getLegalActions(self.index)
 
     bestaction = None
@@ -11,20 +12,15 @@ class defenseModule(module.agentModule):
     besttiebreaker = -1e10
     enemyPositions = self.inferenceModule.getEnemyMLEs().values()
     for action in actions:
-      print action
       newState=gameState.generateSuccessor(self.index,action)
       if not self.inferenceModule.isOnOurSide(self.whereAreWe(newState)):
         continue
-      actionranking = self.evaluateBoard(newState)
-      print "action " + str(action) + " gives utility " + str(actionranking)
+      actionranking = self.evaluateBoard([newState.getAgentPosition(p) for p in defensiveMatching],self.getOurFood(newState), self.inferenceModule.getEnemyMLEs().values())
       if actionranking>bestranking:
         bestaction = action
         bestranking = actionranking
-    import random
-    if random.random()<.1:
-      return action
 
-    print "For best action " + str(bestaction) + " we do utility " + str(action)
+    #print "For best action " + str(bestaction) + " we do utility " + str(action)
     return bestaction
 
   def getSuccessor(self, gameState, action):
@@ -66,45 +62,48 @@ class defenseModule(module.agentModule):
   def getAvgDelta(self, ourD, theirD):
     return avg(ourD)-avg(theirD)
   
-  def getAverageDistance(self, ourpositions, enemypositions):
+  def getAverageMinDistance(self, ourpositions, enemypositions):
     totaldistance = 0
     for p in ourpositions:
-     for enemyp in enemypositions:
-       totaldistance += self.getOurSideMazeDistance(p,enemyp)
-    return totaldistance / float(len(ourpositions)*len(enemypositions))
+     totaldistance += min([self.getOurSideMazeDistance(p,enemyp) for enemyp in enemypositions])
+    return totaldistance / float(len(ourpositions))
+ 
+  def getNumWhereWeAreCloser(self,ourD, theirD):
+    total = 0
+    for i in range(len(ourD)):
+      if ourD[i]<theirD[i]:
+        total+=1
+    return total 
 
-  def evaluateBoard(self, gameState):
-    enemyPositions = self.inferenceModule.getEnemyMLEs().values()
+  def evaluateBoard(self, ourPositions, ourFood,enemyPositions):
     enemyAttackers =[pos for pos in enemyPositions if self.inferenceModule.isOnOurSide(pos)] 
-    ourPositions = [gameState.getAgentPosition(index) for index in self.friends]
-    
     for ourP in ourPositions:
       for enemyP in enemyPositions:
         if ourP == enemyP:
           return 1e10
     
-    ourMinDistances = self.getMinDistanceToEachSquare(ourPositions, self.getOurFood(gameState),True)
-    theirMinDistances = self.getMinDistanceToEachSquare(enemyPositions, self.getOurFood(gameState),False)
-    ourAvgDistances = self.getAvgDistanceToEachSquare(ourPositions, self.getOurFood(gameState),True)
-    theirAvgDistances = self.getAvgDistanceToEachSquare(enemyPositions, self.getOurFood(gameState),False)
+    ourMinDistances = self.getMinDistanceToEachSquare(ourPositions, ourFood,True)
+    theirMinDistances = self.getMinDistanceToEachSquare(enemyPositions, ourFood,False)
+
+    numSafeFoodPleasure = self.getNumWhereWeAreCloser(ourMinDistances,theirMinDistances)
+
+    ourAvgDistances = self.getAvgDistanceToEachSquare(ourPositions, ourFood,True)
 
     maxMinViolation = self.getMaxDelta(ourMinDistances, theirMinDistances)
     maxMinViolationOrZero = max(maxMinViolation, 0)
 
-    print maxMinViolationOrZero
 
-    maxAvgViolation = self.getMaxDelta(ourAvgDistances, theirAvgDistances)
     avgMinViolations = self.getAvgDelta(ourMinDistances, theirMinDistances)
-    avgAvgViolation = self.getAvgDelta(ourAvgDistances, theirAvgDistances)
 
-    averageOurSideDistanceBetweenGhosts = self.getAverageDistance(ourPositions,enemyAttackers)
+    averageOurSideDistanceBetweenGhosts = self.getAverageMinDistance(ourPositions,enemyAttackers)
 
-    
+    protectionViolation =  maxMinViolationOrZero*10 + 2*maxMinViolation + avgMinViolations + .3 * avg(ourAvgDistances)
 
-    protectionViolation =  maxMinViolationOrZero*8 + maxMinViolation + maxAvgViolation+avgMinViolations+avgAvgViolation
-    threatToThemViolation =  6*averageOurSideDistanceBetweenGhosts
+    threatToThemViolation =  13*averageOurSideDistanceBetweenGhosts
 
-    return -threatToThemViolation-protectionViolation
+#    return -protectionViolation
+    return -threatToThemViolation
+    return numSafeFoodPleasure-threatToThemViolation-protectionViolation
   def showListofPositions(self, list):
     weights = util.Counter()
     for pos in list:

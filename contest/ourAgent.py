@@ -9,8 +9,14 @@ import random, time, util
 from game import Directions
 import game
 import module
+import attackModule
 from util import nearestPoint
 
+def zeros(k):
+  zeros = ''
+  for i in range(k):
+    zeros += '0'
+  return zeros
 
 class inferenceModule():
   def __init__(self):
@@ -35,6 +41,10 @@ class inferenceModule():
     sideToWallOff = self.halfway + x
     for i in range(layout.height):
       ourSideLayout.walls[sideToWallOff][i]=True
+      
+
+    self.distancer = distanceCalculator.Distancer(layout)
+    self.distancer.getMazeDistances()
 
     self.ourSideDistancer = distanceCalculator.Distancer(ourSideLayout)
     self.ourSideDistancer.getMazeDistances()
@@ -126,21 +136,125 @@ class ourAgent(CaptureAgent):
     #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
     self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
-
+    self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.inferenceModule,self.distancer)
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
     self.isRed = isRed
 
+  def getOurPositionMapping(self,gameState):
+    mapping = {}
+    for friend in self.friends:
+      mapping[friend] = gameState.getAgentPosition(friend)
+    return mapping
+
+  def findDefensiveAndHLTMatchings(self,ourPositions, attackingEnemies,gameState):
+    numberDefendersToSelect = len(attackingEnemies)
+    if numberDefendersToSelect == 0:
+      return {},ourPositions
+    if numberDefendersToSelect > len(ourPositions):
+      return ourPositions,{}
+    ourGuysIndices = ourPositions.keys()
+
+    maxValue = -1e10
+    maxSet = {}
+    for i in range(2**len(ourPositions)):
+      bits = bin(i)[2:]
+      bits = zeros(len(ourPositions)-len(bits)) + bits
+      thisSetup = {}
+      converseSetup = {}
+      for index in range(len(ourGuysIndices)):
+        if int(bits[index]) ==1:
+          thisSetup[ourGuysIndices[index]]= ourPositions[ourGuysIndices[index]]
+        else:
+          converseSetup[ourGuysIndices[index]]= ourPositions[ourGuysIndices[index]]
+      if len(thisSetup.keys()) != numberDefendersToSelect:
+        continue
+      else:
+        value = self.defenseModule.evaluateBoard(thisSetup.values(),self.defenseModule.getOurFood(gameState) , attackingEnemies)
+        if value > maxValue:
+          maxValue= value
+          maxSet = thisSetup
+          maxConverseSet = converseSetup
+    print "Best set we can find is " + str(maxSet) + " with value " + str(maxValue) + " and converse set " + str(maxConverseSet)
+    return maxSet, maxConverseSet
+
+  def classifyNotAttackEnemies(self, gameState, notAttackingEnemies):
+    sparringEnemies = []
+    farEnemies = []
+    
+    edge = self.inferenceModule.edge
+
+    
+    for enemy in notAttackingEnemies:
+      if min([self.distancer.getDistance(enemy, e) for e in edge]) > 5:
+        farEnemies.append(enemy)
+      else:
+        sparringEnemies.append(enemy)
+
+    return sparringEnemies, farEnemies
+
+  def findhltAttack(self,hltorAttackMatching, attackingEnemies,notAttackingEnemies): #this is embarressingly bad
+    hltMatching = {}
+    attackMatching = {}
+   
+    numberDefenders = len(attackingEnemies)
+  
+    if len(hltorAttackMatching.keys()) <= numberDefenders:
+      return hltorAttackMatching, {}
+
+    hltKeys = hltorAttackMatching.keys()[:numberDefenders]
+    print "number of defenders we think we need " + str(numberDefenders)
+    for key in hltorAttackMatching:
+      if key in hltKeys:
+        hltMatching[key] = hltorAttackMatching[key]
+      else:
+        attackMatching[key] =hltorAttackMatching[key]
+    return hltMatching,attackMatching
+ 
+    
+   
+
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    #self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
-    if max(enemiesAttacking): #this means one of them is on our side
-     # print "They're attacking man the stockade " + str(enemyMLEs)
-      return self.defenseModule.chooseAction(gameState)
+
+    attackingEnemies = []
+    notAttackingEnemies = []
+    for i in range(len(enemyMLEs)):
+      if enemiesAttacking[i]:
+        attackingEnemies.append(enemyMLEs[i])
+      else:
+        notAttackingEnemies.append(enemyMLEs[i])
+
+    sparringEnemies, farEnemies = self.classifyNotAttackEnemies(gameState,notAttackingEnemies)
+
+    ourPositions = self.getOurPositionMapping(gameState)
+    print "Our current agent position is " + str(ourPositions[self.index])
+    if not self.inferenceModule.isOnOurSide(ourPositions[self.index]):
+      print "Attacking because we're on their side"
+      return self.attackModule.chooseAction(gameState)
+    for key in ourPositions.keys():
+      if not self.inferenceModule.isOnOurSide(ourPositions[key]):
+        del ourPositions[key]
+    defensiveMatching,hltorAttackMatching = self.findDefensiveAndHLTMatchings(ourPositions,attackingEnemies,gameState)
+
+    print "Close enemies " + str(sparringEnemies) + " far enemies " + str(farEnemies)
+    hltMatching, attackMatching = self.findhltAttack(hltorAttackMatching, sparringEnemies,farEnemies)
+
+    print "This is our attacker list " + str(attackMatching)
+
+    if self.index in defensiveMatching: #this means one of them is on our side
+      print "Our agent " + str(self.index) + " is playing defense" + str(defensiveMatching.keys()) + " against " + str(attackingEnemies)
+      return self.defenseModule.chooseAction(gameState,defensiveMatching.keys(), attackingEnemies)
+    elif self.index in attackMatching:
+      print "Begin to attack"
+      return self.attackModule.chooseAction(gameState)
     else:
-      return self.holdTheLineModule.chooseAction(gameState)
+      print "Our agent " + str(self.index) + " is playing HLT with " + str(hltMatching.keys()) + "against " + str(notAttackingEnemies)
+      self.displayDistributionsOverSquares(enemyMLEs)
+      return self.holdTheLineModule.chooseAction(gameState,hltMatching.keys(), notAttackingEnemies)
+#      return self.holdTheLineModule.chooseAction(gameState,defensiveMatching, attackingEnemies)
   
   def getWhoMovedLast(self, gameState): #this is buggy since we might be first to move.    
     return (self.index-1) % (len(self.friends) + len(self.enemies))
@@ -149,10 +263,9 @@ class ourAgent(CaptureAgent):
     map = util.Counter()
     for square in squares:
       map[square] = 1
-    #print "Squares we're showing are " + str(squares)
     self.displayDistributionsOverPositions([map]) 
  
   def updateInference(self, gameState):
     self.inferenceModule.updateBasedOnMovement(self.getWhoMovedLast(gameState), gameState)
     self.inferenceModule.restrictBasedOnSensor(gameState, self.whereAreWe(gameState))
-    self.displayDistributionsOverSquares(self.inferenceModule.getEnemyMLEs().values())
+    #self.displayDistributionsOverSquares(self.inferenceModule.getEnemyMLEs().values())

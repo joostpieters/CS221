@@ -26,7 +26,7 @@ class BaselineAgents(AgentFactory):
   def __init__(self, isRed, first='offense', second='offense', rest='offense'):
     AgentFactory.__init__(self, isRed)
     #self.agents = [first, second]
-    self.agents = ['offense', 'offense']
+    self.agents = ['offense', 'keys']
     self.rest = rest
 
   def getAgent(self, index):

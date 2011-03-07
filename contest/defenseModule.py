@@ -76,6 +76,8 @@ class defenseModule(module.agentModule):
     return total 
 
   def evaluateBoard(self, ourPositions, ourFood,enemyPositions):
+    if len(ourPositions)==0:
+      return -3 * len(enemyPositions) 
     enemyAttackers =[pos for pos in enemyPositions if self.inferenceModule.isOnOurSide(pos)] 
     for ourP in ourPositions:
       for enemyP in enemyPositions:

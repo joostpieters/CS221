@@ -28,7 +28,8 @@ class LayoutNode:
         return self.positions
 
 class CellLayout:
-    def __init__(self, layout):
+    def __init__(self, layout, distancer):
+        self.distancer = distancer
         self.layout = layout
         self.walls = layout.walls
         onBoardPos = self.getLegalPosition()
@@ -127,9 +128,104 @@ class CellLayout:
             nextnext.getNeighbors().append(cur)
             next = nextnext
         self.contractNodesRec(startNode, alreadyContracted)
-            
-                
-                    
+        
+    
+    def getLegalPosition(self):
+        positions = self.layout.agentPositions
+        if(len(positions) > 0):
+            return positions[0][1]
+        walls = self.layout.walls
+        for i in range(walls.width):
+            for j in range(walls.height):
+                if(not walls[i][j]):
+                    return (i,j)
+        return None
+    
+    
+    # Returns whether the agent at trapperPos can trap the
+    # agent at trappedPos, searching through depthToSearch
+    # in the cell graph
+    #
+    # Returns None if you enter a position that isn't in
+    # the cell graph
+    #
+    # If returns a pair of a boolean (whether we can trap)
+    # and a list (the cells we block off containing trappedPos)
+    def canTrap(self, trapperPos, trappedPos, depthToSearch):
+        startNode = self.cells[trapperPos]
+        endNode = self.cells[trappedPos]
+        if(startNode == None or endNode == None):
+            return None
+        if(trapperPos == trappedPos):
+            return (True, [trapperPos])
+        if(startNode == endNode): #it's in our node, and isn't equal to us
+            assert(len(startNode.getNeighbors()) < 3)
+            if(len(startNode.getNeighbors()) <= 0):
+                trapperIndex = startNode.getPositions().index(trapperPos)
+                trappedIndex = startNode.getPositions().index(trappedPos)
+                if(trappedIndex < trapperIndex):
+                    trappedCells = startNode.getPositions()[:trapperIndex]
+                else:
+                    trappedCells = startNode.getPositions()[trapperIndex:]
+                return (True, trappedCells)
+            if(len(startNode.getNeighbors()) == 1):
+                neighbor = startNode.getNeighbors()[0]
+                if(len(neighbor.getPositions()) > 1):
+                    return (False, []) # here we are in a loop, so it can always loop away
+                neighborPos = neighbor.getPositions()[0]
+                trapperDist = self.distancer.getDistance(trapperPos, neighborPos)
+                trappedDist = self.distancer.getDistance(trappedPos, neighborPos)
+                if(trapperDist < trappedDist):
+                    trapperIndex = startNode.getPositions().index(trapperPos)
+                    trappedIndex = startNode.getPositions().index(trappedPos)  
+                    if(trappedIndex < trapperIndex):
+                        trappedCells = startNode.getPositions()[:trapperIndex]
+                    else:
+                        trappedCells = startNode.getPositions()[trapperIndex:]
+                    return (True, trappedCells)
+                else:
+                    return (False, [])
+            # if we get here, we are in a two-sided pipe
+            neighbor0 = startNode.getPositions()[0]
+            if(len(neighbor0.getPositions()) > 1):
+                return (False, []) # here we are in a loop, so it can always loop away
+            neighbor0pos = neighbor0.getPositions()[0]
+            trapperDist = self.distancer.getDistance(trapperPos, neighbor0pos)
+            trappedDist = self.distancer.getDistance(trappedPos, neighbor0pos)
+            if(trapperDist < trappedDist):
+                neighbor = startNode.getPositions()[0]
+            else:
+                neighbor = startNode.getPositions()[1]
+            blocked = set([])
+            canTrap = canTrapRec(neighbor, depthToSearch, blocked)
+            if(canTrap):
+                blockList = [s for s in blocked]
+                if(endNode in blocked):
+                    return (True, blockList)
+                else:
+                    return (False, blockList)
+            return (False, [])
+        for neighbor in startNode.getNeighbors():
+            blocked = set([])
+            canTrap = canTrapRec(neighbor, depthToSearch, blocked)
+            if(canTrap):
+                blockList = [s for s in blocked]
+                if(endNode in blocked):
+                    return (True, blockList)
+        return (False, [])
+    
+        
+    def canTrapRec(self, startNode, depthToSearch, blockedNodes):
+        if(startNode in exploredNodes):
+            return True
+        if(depthToSearch == 0):
+            return False
+        blockedNodes.add(startNode)
+        for neighbor in startNode.getNeighbors():
+            if(not self.canTrapRec(neighbor, depthToSearch - 1, blockedNodes)):
+                return False
+        return True
+    
     
     def debugCheck(self):
         self.debugGrid = Grid(self.walls.width, self.walls.height, True)
@@ -156,15 +252,5 @@ class CellLayout:
             self.debugGrid[pos[0]][pos[1]] = False
         for neighbor in curCell.getNeighbors():
             self.debugExpand(neighbor)
-        
     
-    def getLegalPosition(self):
-        positions = self.layout.agentPositions
-        if(len(positions) > 0):
-            return positions[0][1]
-        walls = self.layout.walls
-        for i in range(walls.width):
-            for j in range(walls.height):
-                if(not walls[i][j]):
-                    return (i,j)
-        return None
+    

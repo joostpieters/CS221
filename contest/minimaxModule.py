@@ -3,8 +3,8 @@ import game
 import time
 from util import Queue
 
-DETECT_CYCLES = False
-PRINTDEBUG = False
+DETECT_CYCLES = True
+PRINTDEBUG = True
 
 class MinimaxModuleDelegate:
     
@@ -15,32 +15,44 @@ class MinimaxModuleDelegate:
 A self-expanding node for a minimax tree
 """
 class MinimaxNode:
-  def __init__(self, parent, gameState, agentIndex, delegate, action = None):
+  def __init__(self, parent, gameState, agentIndex, delegate, ignoreIndices, action = None):
       self.parent = parent
       self.state = gameState
       self.index = agentIndex
       self.delegate = delegate
       self.action = action
+      self.ignoreIndices = ignoreIndices
       self.value = self.delegate.getStateValue(gameState)
       self.children = []
       
   def expand(self):
       if(len(self.children) == 0): #only expand if we haven't already
-          curNode = self.parent
-          cycle = False
-          while(DETECT_CYCLES and curNode != None):
-              if(self.state == curNode.state):
-                  cycle = True
-              curNode = curNode.parent
-          if(not cycle): # don't expand cyclic graphs
-              nextIndex = (self.index + 1) % self.state.getNumAgents()
+          if(DETECT_CYCLES):
+              curNode = self.parent
+              cycle = False
+              for i in range(2 * self.state.getNumAgents()):
+                  if(not DETECT_CYCLES or curNode == None):
+                      break
+                  curNode = curNode.parent
+              if(curNode != None):
+                  redIndex = (self.index in self.state.getRedTeamIndices())
+                  curNodeFood = curNode.state.getBlueFood() if redIndex else curNode.state.getRedFood()
+                  selfNodeFood = self.state.getBlueFood() if redIndex else curNode.state.getRedFood()
+                  if(curNode.state.getAgentPosition(self.index) == self.state.getAgentPosition(self.index) and curNodeFood == selfNodeFood):
+                      cycle = True
+          if(not (DETECT_CYCLES and cycle)): # don't expand cyclic graphs
+              numAgents = self.state.getNumAgents()
+              nextIndex = (self.index + 1) % numAgents
+              while(nextIndex in self.ignoreIndices):
+                  if(nextIndex == self.index): break # avoid infinite loops
+                  nextIndex = (nextIndex + 1) % numAgents
               if(self.state.getAgentPosition(self.index) == None): #if we don't know how to expand the state at the given 
-                  self.children.append(MinimaxNode(self, self.state, nextIndex, self.delegate, None))
+                  self.children.append(MinimaxNode(self, self.state, nextIndex, self.delegate, self.ignoreIndices, None))
               else:
                   actions = self.state.getLegalActions(self.index)
                   for action in actions:
                       nextState = self.getSuccessor(self.state, action)
-                      self.children.append(MinimaxNode(self, nextState, nextIndex, self.delegate, action))
+                      self.children.append(MinimaxNode(self, nextState, nextIndex, self.delegate, self.ignoreIndices, action))
     
   def calculateMinimaxValue(self, isRed):
       if(len(self.children) <= 0):
@@ -66,8 +78,9 @@ A class that handles running minimax
 """
 class MinimaxModule:
   
-  def __init__(self, delegate):
+  def __init__(self, delegate, ignoreIndices = []):
       self.delegate = delegate
+      self.ignoreIndices = ignoreIndices
 
   """
   For a given game state, this hands back the action-value minimax calculated
@@ -82,9 +95,10 @@ class MinimaxModule:
       nextExpand = Queue()
       
       # create and enqueue the first node
-      rootNode = MinimaxNode(None, gameState, agentIndex, self.delegate)
+      rootNode = MinimaxNode(None, gameState, agentIndex, self.delegate, self.ignoreIndices)
       curExpand.push(rootNode)
       nodesExpanded = 1
+      depthExpanded = 0
       
       # bfs expanding nodes
       while(True):
@@ -98,11 +112,12 @@ class MinimaxModule:
                   break
           if(time.time() - startTime > expandTimeout):
               break
+          depthExpanded += 1
           curExpand = nextExpand
           nextExpand = Queue()
       
       timeTaken = time.time() - startTime
-      if(PRINTDEBUG): print("Expanded " + str(nodesExpanded) + " nodes in " + str(timeTaken) + " seconds.")
+      if(PRINTDEBUG): print("Expanded " + str(nodesExpanded) + " nodes to a depth of " + str(depthExpanded) + "in " + str(timeTaken) + " seconds.")
       
       if(PRINTDEBUG): print("Calculating Minimax values...")
       minimaxStartTime = time.time()

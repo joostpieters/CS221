@@ -117,7 +117,8 @@ class holdTheLineModule(module.agentModule):
     ourMaxDistance = max(ourDistancesToSquares)
 
     ourAverageDistanceToSquaresViolation = self.avgDistanceToSquares(ourPositions,relevantSquares)
-    return - 2*ourAverageDistanceToSquaresViolation-5*opponentMaxViolation- 2*max(0,opponentSecondMaxViolation)- ourMaxDistance-.5*teamavgMinDistanceToEdgeViolation
+
+    return - 2*ourAverageDistanceToSquaresViolation-5*opponentMaxViolation- 2*max(0,opponentSecondMaxViolation)- ourMaxDistance-2*teamavgMinDistanceToEdgeViolation
 
   def showListofPositions(self, list):
     weights = util.Counter()

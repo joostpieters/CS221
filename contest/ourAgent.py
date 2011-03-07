@@ -260,10 +260,8 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate):
   def chooseAction(self, gameState):
     self.updateInference(gameState)
 
-
-
     minimaxMod = MinimaxModule(self)
-    minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.5)
+    minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.1)
 
     bestActions = []
     bestVal = 0

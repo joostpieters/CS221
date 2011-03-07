@@ -61,6 +61,7 @@ class inferenceModule():
     self.hasBeenInitialized = True
     self.index = index
     self.enemypositions = {}
+    self.isRed = isRed
     self.lastKnownDistances = { self.index : gameState.getInitialAgentPosition(self.index) }
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
@@ -139,7 +140,7 @@ class ourAgent(CaptureAgent):
 
   def chooseAction(self,gameState):
     self.updateInference(gameState)
-    self.displayDistributionsOverPositions(self.inferenceModule.enemypositions.values())
+    self.displayDistributionsOverSquares(self.inferenceModule.getEnemyMLEs().values())
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
     if max(enemiesAttacking): #this means one of them is on our side

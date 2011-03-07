@@ -3,6 +3,9 @@ import game
 import time
 from util import Queue
 
+DETECT_CYCLES = False
+PRINTDEBUG = False
+
 class MinimaxModuleDelegate:
     
   def getStateValue(self, gameState):
@@ -12,7 +15,8 @@ class MinimaxModuleDelegate:
 A self-expanding node for a minimax tree
 """
 class MinimaxNode:
-  def __init__(self, gameState, agentIndex, delegate, action = None):
+  def __init__(self, parent, gameState, agentIndex, delegate, action = None):
+      self.parent = parent
       self.state = gameState
       self.index = agentIndex
       self.delegate = delegate
@@ -22,14 +26,21 @@ class MinimaxNode:
       
   def expand(self):
       if(len(self.children) == 0): #only expand if we haven't already
-          nextIndex = (self.index + 1) % self.state.getNumAgents()
-          if(self.state.getAgentPosition(self.index) == None): #if we don't know how to expand the state at the given 
-              self.children.append(MinimaxNode(self.state, nextIndex, self.delegate, None))
-          else:
-              actions = self.state.getLegalActions(self.index)
-              for action in actions:
-                  nextState = self.getSuccessor(self.state, action)
-                  self.children.append(MinimaxNode(nextState, nextIndex, self.delegate, action))
+          curNode = self.parent
+          cycle = False
+          while(DETECT_CYCLES and curNode != None):
+              if(self.state == curNode.state):
+                  cycle = True
+              curNode = curNode.parent
+          if(not cycle): # don't expand cyclic graphs
+              nextIndex = (self.index + 1) % self.state.getNumAgents()
+              if(self.state.getAgentPosition(self.index) == None): #if we don't know how to expand the state at the given 
+                  self.children.append(MinimaxNode(self, self.state, nextIndex, self.delegate, None))
+              else:
+                  actions = self.state.getLegalActions(self.index)
+                  for action in actions:
+                      nextState = self.getSuccessor(self.state, action)
+                      self.children.append(MinimaxNode(self, nextState, nextIndex, self.delegate, action))
     
   def calculateMinimaxValue(self, isRed):
       if(len(self.children) <= 0):
@@ -64,14 +75,14 @@ class MinimaxModule:
   """
   def getMinimaxValues(self, gameState, agentIndex, isRed, expandTimeout):
       startTime = time.time()
-      print("Expanding nodes...")
+      if(PRINTDEBUG): print("Expanding nodes...")
       
       # two queues to deepen minimax
       curExpand = Queue()
       nextExpand = Queue()
       
       # create and enqueue the first node
-      rootNode = MinimaxNode(gameState, agentIndex, self.delegate)
+      rootNode = MinimaxNode(None, gameState, agentIndex, self.delegate)
       curExpand.push(rootNode)
       nodesExpanded = 1
       
@@ -91,9 +102,9 @@ class MinimaxModule:
           nextExpand = Queue()
       
       timeTaken = time.time() - startTime
-      print("Expanded " + str(nodesExpanded) + " nodes in " + str(timeTaken) + " seconds.")
+      if(PRINTDEBUG): print("Expanded " + str(nodesExpanded) + " nodes in " + str(timeTaken) + " seconds.")
       
-      print("Calculating Minimax values...")
+      if(PRINTDEBUG): print("Calculating Minimax values...")
       minimaxStartTime = time.time()
       minimaxValues = []
       
@@ -102,6 +113,6 @@ class MinimaxModule:
           minimaxValues.append((childNode.action, mmaxValue))
       
       minimaxTimeTaken = time.time() - minimaxStartTime
-      print("Calculated Minimax in " + str(minimaxTimeTaken) + " seconds.")
+      if(PRINTDEBUG): print("Calculated Minimax in " + str(minimaxTimeTaken) + " seconds.")
       
       return minimaxValues

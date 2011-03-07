@@ -175,7 +175,6 @@ class ourAgent(CaptureAgent):
           maxValue= value
           maxSet = thisSetup
           maxConverseSet = converseSetup
-    print "Best set we can find is " + str(maxSet) + " with value " + str(maxValue) + " and converse set " + str(maxConverseSet)
     return maxSet, maxConverseSet
 
   def classifyNotAttackEnemies(self, gameState, notAttackingEnemies):
@@ -205,10 +204,10 @@ class ourAgent(CaptureAgent):
     hltKeys = hltorAttackMatching.keys()[:numberDefenders]
     print "number of defenders we think we need " + str(numberDefenders)
     for key in hltorAttackMatching:
-      if key in hltKeys:
-        hltMatching[key] = hltorAttackMatching[key]
-      else:
+      if key not in hltKeys and min([self.distancer.getDistance(hltorAttackMatching[key], e) for e in self.inferenceModule.edge])<5:
         attackMatching[key] =hltorAttackMatching[key]
+      else:
+        hltMatching[key] = hltorAttackMatching[key]
     return hltMatching,attackMatching
  
     
@@ -230,7 +229,7 @@ class ourAgent(CaptureAgent):
     sparringEnemies, farEnemies = self.classifyNotAttackEnemies(gameState,notAttackingEnemies)
 
     ourPositions = self.getOurPositionMapping(gameState)
-    print "Our current agent position is " + str(ourPositions[self.index])
+
     if not self.inferenceModule.isOnOurSide(ourPositions[self.index]):
       print "Attacking because we're on their side"
       return self.attackModule.chooseAction(gameState)
@@ -239,15 +238,17 @@ class ourAgent(CaptureAgent):
         del ourPositions[key]
     defensiveMatching,hltorAttackMatching = self.findDefensiveAndHLTMatchings(ourPositions,attackingEnemies,gameState)
 
-    print "Close enemies " + str(sparringEnemies) + " far enemies " + str(farEnemies)
     hltMatching, attackMatching = self.findhltAttack(hltorAttackMatching, sparringEnemies,farEnemies)
 
-    print "This is our attacker list " + str(attackMatching)
 
     if self.index in defensiveMatching: #this means one of them is on our side
       print "Our agent " + str(self.index) + " is playing defense" + str(defensiveMatching.keys()) + " against " + str(attackingEnemies)
       return self.defenseModule.chooseAction(gameState,defensiveMatching.keys(), attackingEnemies)
     elif self.index in attackMatching:
+      if min([self.distancer.getDistance(ourPositions[self.index], e) for e in self.inferenceModule.edge]) > 5:#too far to attack
+        hltMatching[self.index] = ourPositions[self.index]
+        print "Our agent " + str(self.index) + " is playing HLT with " + str(hltMatching.keys()) + "against " + str(notAttackingEnemies)
+        return self.holdTheLineModule.chooseAction(gameState,hltMatching.keys(), notAttackingEnemies)
       print "Begin to attack"
       return self.attackModule.chooseAction(gameState)
     else:

@@ -77,7 +77,7 @@ class defenseModule(module.agentModule):
 
   def evaluateBoard(self, ourPositions, ourFood,enemyPositions):
     if len(ourPositions)==0:
-      return -3 * len(enemyPositions) 
+      return self.heuristicWeights['defenseModule_lackDefenders'] * len(enemyPositions) 
     enemyAttackers =[pos for pos in enemyPositions if self.inferenceModule.isOnOurSide(pos)] 
     for ourP in ourPositions:
       for enemyP in enemyPositions:
@@ -99,13 +99,13 @@ class defenseModule(module.agentModule):
 
     averageOurSideDistanceBetweenGhosts = self.getAverageMinDistance(ourPositions,enemyAttackers)
 
-    protectionViolation =  maxMinViolationOrZero*10 + 2*maxMinViolation + avgMinViolations + .3 * avg(ourAvgDistances)
+    protectionViolation =  self.heuristicWeights['defenseModule_maxMinOrZero']*maxMinViolationOrZero \
+       +self.heuristicWeights['defenseModule_maxMin']*maxMinViolation + self.heuristicWeights['defenseModule_avgMin'] * avgMinViolations + self.heuristicWeights['defenseModule_avgAvgDistances'] * avg(ourAvgDistances)
 
-    threatToThemViolation =  13*averageOurSideDistanceBetweenGhosts
+    threatToThemViolation =  self.heuristicWeights['defenseModule_averageThreat']*averageOurSideDistanceBetweenGhosts
 
-#    return -protectionViolation
-    return -threatToThemViolation
-    return numSafeFoodPleasure-threatToThemViolation-protectionViolation
+    return self.heuristicWeights['defenseModule_safeFood']*numSafeFoodPleasure+threatToThemViolation+protectionViolation
+
   def showListofPositions(self, list):
     weights = util.Counter()
     for pos in list:

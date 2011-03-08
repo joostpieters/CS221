@@ -602,13 +602,16 @@ def readCommand( argv ):
   parser.add_option('-Q', '--super-quiet', action='store_true', dest="super_quiet",
                     help='Same as -q but agent output is also suppressed', default=False)
 
+  parser.add_option('-v', '--verbose', action='store_true', dest="verbose",
+                    help='Include our debug info', default=False)
+
   parser.add_option('-k', '--numPlayers', type='int', dest='numPlayers',
                     help=default('The maximum number of players'), default=4)
   parser.add_option('-z', '--zoom', type='float', dest='zoom',
                     help=default('Zoom in the graphics'), default=1)
   parser.add_option('-i', '--time', type='int', dest='time',
                     help=default('TIME limit of a game in moves'), default=3000, metavar='TIME')
-  parser.add_option('-n', '--numGames', type='int',
+  parser.add_option('-n', '--numGames', type='int', dest='numGames',
                     help=default('Number of games to play'), default=1)
   parser.add_option('-f', '--fixRandomSeed', action='store_true',
                     help='Fixes the random seed to always play the same game', default=False)
@@ -643,6 +646,9 @@ def readCommand( argv ):
     import graphicsDisplay
     graphicsDisplay.FRAME_TIME = 0
     args['display'] = graphicsDisplay.PacmanGraphics(options.zoom, 0, capture=True)
+    
+  if options.verbose:
+    args['verbose'] = True
 
   if options.fixRandomSeed: random.seed('cs188')
 
@@ -657,9 +663,6 @@ def readCommand( argv ):
 
   # Choose a pacman agent
   redArgs, blueArgs = parseAgentArgs(options.redOpts), parseAgentArgs(options.blueOpts)
-  if options.numTraining > 0:
-    redArgs['numTraining'] = options.numTraining
-    blueArgs['numTraining'] = options.numTraining
   nokeyboard = options.textgraphics or options.quiet or options.numTraining > 0
   print '\nRed team %s with %s:' % (options.red, redArgs)
   redAgents = loadAgents(True, options.red, nokeyboard, redArgs)
@@ -775,7 +778,7 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
     print 'Playing %d training games' % numTraining
 
   for i in range( numGames ):
-    beQuiet = i < numTraining
+    beQuiet = i < numTraining or True
     if beQuiet:
         # Suppress output and graphics
         import textDisplay

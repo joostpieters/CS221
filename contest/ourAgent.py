@@ -67,6 +67,10 @@ class inferenceModule():
     self.index = index
     self.enemypositions = {}
     self.isRed = isRed
+    if(isRed):
+      self.foodGrid = gameState.getRedFood()
+    else:
+      self.foodGrid = gameState.getBlueFood()
     self.lastKnownDistances = { self.index : gameState.getInitialAgentPosition(self.index) }
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
@@ -88,10 +92,11 @@ class inferenceModule():
     return MLEestimators      
   
   def restrictBasedOnSensor(self,gameState, ourAgentPos):
-    self.opponentModel.updatePositionsBasedOnSensor(gameState, ourAgentPos)
-      
+    self.opponentModel.updatePositionsBasedOnSensor(gameState, ourAgentPos) 
+
   def updateBasedOnMovement(self, agentIndex, gameState): 
     self.opponentModel.updateBasedOnMovement(agentIndex, gameState)
+    self.opponentModel.updatePositionsBasedOnFood(agentIndex, gameState)
 
 class ourFactory(AgentFactory):
   "Returns one keyboard agent and offensive reflex agents"
@@ -205,7 +210,6 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate):
       return hltorAttackMatching, {}
 
     hltKeys = hltorAttackMatching.keys()[:numberDefenders]
-    print "number of defenders we think we need " + str(numberDefenders)
     for key in hltorAttackMatching:
       if key not in hltKeys and min([self.distancer.getDistance(hltorAttackMatching[key], e) for e in self.inferenceModule.edge])<5:
         attackMatching[key] =hltorAttackMatching[key]
@@ -253,9 +257,6 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate):
       attackScore = attackScores[0]
     except:
       attackScore = attackScores
-    print "attack score is " + str(attackScore)
-    print 'hlt score ' + str(hltScore)
-    print 'dscore ' + str(dScore)
     return hltScore+dScore+(1e-4*attackScore)
 
   def chooseAction(self, gameState):

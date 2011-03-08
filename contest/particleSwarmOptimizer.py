@@ -83,7 +83,11 @@ class ParticleSwarm:
         potentialBests = [p for p in self.particles if p.bestKnownVal == self.bestKnownVal]
         self.bestKnown = potentialBests[0].bestKnown.copy()
         if(len(potentialBests) > 1):
+            print "Tie in init, so set up default player as best"
             self.bestKnownVal += 1 # tiebreak, for swarm consistency
+            potentialBests[0].bestKnown = optimizableDelegate.getDefaultWeights().copy()
+            potentialBests[0].bestKnownVal = self.bestKnownVal
+            self.bestKnown = potentialBests[0].bestKnown.copy()
         
 
 """
@@ -105,6 +109,8 @@ class ParticleSwarmOptimizer:
       self.swarm = ParticleSwarm(optimizableDelegate, numParticles, self.fitnessInitializer)
       
   def optimize(self, numIterations):
+      if(self.verbose):
+          print("STARTING OPTIMIZE!")
       for i in range(numIterations):
           for particle in self.swarm.particles:
               particle.updateVelocity()
@@ -116,15 +122,15 @@ class ParticleSwarmOptimizer:
                   print(" and position: ")
                   print(particle.position)
                   print("assigned a value of ")
-                  particleVal
+                  print(particleVal)
               if(particle.bestKnownVal < particleVal):
                   particle.bestKnownVal = particleVal
                   particle.bestKnown = particle.position.copy()
                   if(self.verbose):
                       self.printBestKnown(particle)
-                  if(swarm.bestKnownVal < particleVal):
-                      swarm.bestKnownVal = particleVal
-                      swarm.bestKnown = particle.position.copy()
+                  if(self.swarm.bestKnownVal < particleVal):
+                      self.swarm.bestKnownVal = particleVal
+                      self.swarm.bestKnown = particle.position.copy()
                       if(self.verbose):
                           self.printNewSwarmBestKnown()
           if(self.verbose):
@@ -140,7 +146,7 @@ class ParticleSwarmOptimizer:
   def printNewSwarmBestKnown(self):
       print("====================================================================")
       print("New Swarm Best Known:")
-      print(swarm.bestKnown)
+      print(self.swarm.bestKnown)
       print("====================================================================")
               
   def printSwarmBestKnown(self, i):
@@ -148,17 +154,15 @@ class ParticleSwarmOptimizer:
       print("====================================================================")
       print("====================================================================")
       print("After iteration " + str(i) + " we have the following best known position:")
-      print(swarm.bestKnown)
+      print(self.swarm.bestKnown)
       print("====================================================================")
       print("====================================================================")
       print("====================================================================")
 
   def fitnessBattle(self, particle):
-      bestParticle = True
-      
       options = capture.readCommand(self.flags)
       verbose = options.pop('verbose') # pop it off since runGame can't handle it
-      options['display'] = None
+      #options['display'] = None
       options['numGames'] = 1
       options['record'] = False
       options['numTraining'] = False
@@ -167,11 +171,11 @@ class ParticleSwarmOptimizer:
       games = capture.runGames(**options)
       assert(len(games) == 1)
       if(games[0].state.data.score < 0): #Blue wins
-          bestParticle = False
+          return particle.bestKnownVal - 1
       
       options = capture.readCommand(self.flags)
       verbose = options.pop('verbose') # pop it off since runGame can't handle it
-      options['display'] = None
+      #options['display'] = None
       options['numGames'] = 1
       options['record'] = False
       options['numTraining'] = False
@@ -180,15 +184,13 @@ class ParticleSwarmOptimizer:
       games = capture.runGames(**options)
       assert(len(games) == 1)
       if(games[0].state.data.score > 0): #Red wins
-          bestParticle = False
-      
-      if(not bestParticle): return particle.bestKnownVal - 1
+          return particle.bestKnownVal - 1
       
       bestSwarm = True
       
       options = capture.readCommand(self.flags)
       verbose = options.pop('verbose') # pop it off since runGame can't handle it
-      options['display'] = None
+      #options['display'] = None
       options['numGames'] = 1
       options['record'] = False
       options['numTraining'] = 0
@@ -197,11 +199,11 @@ class ParticleSwarmOptimizer:
       games = capture.runGames(**options)
       assert(len(games) == 1)
       if(games[0].state.data.score < 0): #Blue wins
-          bestSwarm = False
+          return particle.swarm.bestKnownVal
       
       options = capture.readCommand(self.flags)
       verbose = options.pop('verbose') # pop it off since runGame can't handle it
-      options['display'] = None
+      #options['display'] = None
       options['numGames'] = 1
       options['record'] = False
       options['numTraining'] = 0
@@ -210,9 +212,9 @@ class ParticleSwarmOptimizer:
       games = capture.runGames(**options)
       assert(len(games) == 1)
       if(games[0].state.data.score > 0): #Red wins
-          bestSwarm = False
+          return particle.swarm.bestKnownVal
           
-      return particle.swarm.bestKnownVal + 1 if bestSwarm else particle.swarm.bestKnownVal
+      return particle.swarm.bestKnownVal + 1
       
           
 if __name__ == '__main__':
@@ -238,10 +240,6 @@ if __name__ == '__main__':
     bestValues = optimizer.optimize(numIterations)
     print("Best Values = ")
     print(bestValues)
-    
-    
-    
-    
     
     
     

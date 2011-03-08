@@ -773,12 +773,14 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
 
   rules = CaptureRules()
   games = []
+  otherGames = []
 
   if numTraining > 0:
     print 'Playing %d training games' % numTraining
 
   for i in range( numGames ):
-    beQuiet = i < numTraining or True
+    print("Playing a game... out of " + str(numGames))
+    beQuiet = i < numTraining or display == None
     if beQuiet:
         # Suppress output and graphics
         import textDisplay
@@ -789,7 +791,9 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
         rules.quiet = False
     g = rules.newGame( layout, agents, gameDisplay, length, muteAgents, catchExceptions )
     g.run()
+    
     if not beQuiet: games.append(g)
+    else: otherGames.append(g)
 
     g.record = None
     if record:
@@ -811,6 +815,8 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
     print 'Red Win Rate:  %d/%d (%.2f)' % ([s > 0 for s in scores].count(True), len(scores), redWinRate)
     print 'Blue Win Rate: %d/%d (%.2f)' % ([s < 0 for s in scores].count(True), len(scores), blueWinRate)
     print 'Record:       ', ', '.join([('Blue', 'Tie', 'Red')[max(0, min(2, 1 + s))] for s in scores])
+    
+  games.extend(otherGames)
   return games
 
 

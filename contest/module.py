@@ -1,9 +1,10 @@
 class agentModule():
-  def __init__(self, friends, enemies, isRed, index,inferenceModule,distancer=None):
+  def __init__(self, friends, enemies, isRed, index, heuristicWeights, inferenceModule, distancer=None):
     self.friends=friends
     self.enemies=enemies
     self.isRed=isRed
     self.index=index
+    self.heuristicWeights = heuristicWeights
     self.distancer = distancer
     self.inferenceModule = inferenceModule
 

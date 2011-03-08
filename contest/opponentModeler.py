@@ -34,6 +34,21 @@ class opponentModel():
             self.iModel.enemypositions[enemy][pos] = 0
 #          self.enemypositions[enemy] = self.enemypositions[enemy] * gameState.getDistanceProb(1, observeddistance)
       self.iModel.enemypositions[enemy].normalize()
+    
+  def updatePositionsBasedOnFood(self, agentIndex, gameState):
+    if(self.iModel.isRed):
+      newGrid = gameState.getRedFood()
+    else:
+      newGrid = gameState.getBlueFood()
+    for i in range(newGrid.width):
+      for j in range(newGrid.height):
+        if (self.iModel.foodGrid[i][j] != newGrid[i][j]):
+          foodPos = (i,j)
+          self.iModel.enemypositions[agentIndex] = util.Counter()
+          self.iModel.enemypositions[agentIndex][foodPos] = 1
+          print "Food eaten by index: " + str(agentIndex)
+          break
+    self.iModel.foodGrid = newGrid
 
   def getStateValue(self, gameState, position):
     red = self.iModel.isRed

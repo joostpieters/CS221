@@ -676,8 +676,6 @@ def readCommand( argv ):
   if args['layout'] == None: raise Exception("The layout " + options.layout + " cannot be found")
 
   args['agents'] = args['agents'][:min(args['layout'].getNumGhosts(), options.numPlayers)]
- 
-  print "!!!!!!!!!!!!!! " + str(args['agents'])
   args['length'] = options.time
   args['numGames'] = options.numGames
   args['numTraining'] = options.numTraining

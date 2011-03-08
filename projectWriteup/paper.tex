@@ -30,7 +30,69 @@ Rafael Witten\\
 \begin{document}
 \maketitle
 \section{Introduction}
-Building a balanced Pac Man: the work of champions.
+A popular and relevant field in artificial intelligence is noisy gameplay
+\cite{miik}.  Noisy readouts, opposing agents, and limited calculation
+time, mean that noisy games are open to a wide variety of AI techniques.
+One particularly relevant example of this field is Capture the Flag (CTF)
+Pac-Man, in which a team of independent agents tries to simultaneously
+protect food on their side of a Pac-Man board while eating the food on
+their opponents' side.  In this paper, we discuss our implementation of a
+balanced agent to play CTF Pac-Man.
+\\ \\
+In our balanced agent, we observed that there are three main branches of
+strategy in CTF Pac-Man: attacking, holding the line, and defending.  The
+first attempts to eat opposing food, the second attempts to block opposing
+agents from entering our side, and the third attempts to capture opposing
+agents and prevent them from eating our food once they cross over.  We
+built individual modules for each one of these strategies to recommend
+moves.  As in many AI agents, the recommendations of these modules and the
+global decision which module to apply use a combination of minimax and
+expectimax, where we look several moves ahead, analyze the strength of our
+position, and act accordingly.
+\\ \\
+Our differentiator and the primary focus of our work was on more advanced
+ways to model opponents and determine the strength of a given game state,
+as well as techniques to optimize the weights used to combine those
+parameters into relevant state values.  For inference of opponent agent
+positions, using prior knowledge and the noisy readings we could observe,
+we used more than just sensor data, and incorporated a basic opponent
+model.  Our various agents incorporated a wide variety of heuristics,
+weighted to recommend moves.  We used a technique called Particle Swarm
+Optimization (PSO) to find a string set of weights.  PSO tends to perform
+well in functions like ours that are difficult to evaluate accurately and
+impossible to analyze from a theoretical perspective \cite{carlisle}.
+Furthermore, we observed that the best weightings varied between different
+layouts.  Therefore, we trained weights for many different boards.  When
+presented with a new board, we clustered it with similar boards (based on
+a number of features of the layout) for which
+we had trained values and used an average of those values.  The result is
+an agent that has learned how to play well on a variety of different
+layouts with a variety of different strategies, and combines that
+knowledge effectively when presented with a new game.
+
+\section{Heuristics}
+\subsection{Offense}
+\subsection{Defense}
+\subsection{Hold the Line}
+
+\section{Inference}
+
+\section{Particle Swarm Optimization}
+\subsection{Algorithm}
+\subsection{Theoretical Justification}
+\subsection{Performance and Results}
+
+\section{$k$-means Clustering for Layouts}
+To solve this problem of disparate weights selected by PSO for different
+layouts, given a layout, we attempted to determine similar layouts for
+which we had already computed training data.  To this end, we used
+$k$-means cluatering.
+\subsection{Methodology}
+\subsection{Performance and Results}
+
+\section{Overall Results}
+
+\section{Discussion}
 
 % This is the Bibliography
 %%%%%%%%%%%%%%%
@@ -39,6 +101,9 @@ Building a balanced Pac Man: the work of champions.
 
 \bibitem{carlisle} Carlisle, A., Dozier, G. (2001). ``An Off-The-Shelf PSO''.
   {\it Proceedings of the Particle Swarm Optimization Workshop}. pp. 1-6. 
+
+\bibitem{miik} Miikkulainen, R. (2006) ``Creating Intelligent
+  Agents in Games''.  {\it The Bridge}.  National Academy of Engineering.
 
 \end{thebibliography}
 

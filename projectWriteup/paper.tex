@@ -76,7 +76,7 @@ knowledge effectively when presented with a new game.
 \subsection{Hold the Line}
 
 \section{Inference}
-
+For inference of opponent agent positions, we update prior probabilities based not only on our sensor readings, but also based on assumptions in our opponent model, which assumes that the opponent is at all times more likely to be moving towards our food and, therefore, places higher probabilities on positions that get them closer. Additionally, our inference module analyzes our food grid and, whenever one of our pieces of food gets eaten, updates the probabilities of the enemy agent that ate it (whichever one moved before our agent who's analyzing his sensor readings). We're also very careful in our inference module about cases where we eat an opponent, to update the probabilities to reflect that they're starting over at their initial position 
 \section{Particle Swarm Optimization}
 \subsection{Algorithm}
 \subsection{Theoretical Justification}

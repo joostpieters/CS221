@@ -70,6 +70,10 @@ class inferenceModule():
     self.index = index
     self.enemypositions = {}
     self.isRed = isRed
+    if(isRed):
+      self.foodGrid = gameState.getRedFood()
+    else:
+      self.foodGrid = gameState.getBlueFood()
     self.lastKnownDistances = { self.index : gameState.getInitialAgentPosition(self.index) }
     for enemy in enemies:
        self.enemypositions[enemy] = util.Counter()
@@ -91,10 +95,11 @@ class inferenceModule():
     return MLEestimators      
   
   def restrictBasedOnSensor(self,gameState, ourAgentPos):
-    self.opponentModel.updatePositionsBasedOnSensor(gameState, ourAgentPos)
-      
+    self.opponentModel.updatePositionsBasedOnSensor(gameState, ourAgentPos) 
+
   def updateBasedOnMovement(self, agentIndex, gameState): 
     self.opponentModel.updateBasedOnMovement(agentIndex, gameState)
+    self.opponentModel.updatePositionsBasedOnFood(agentIndex, gameState)
 
 class ourFactory(AgentFactory):
   "Returns one keyboard agent and offensive reflex agents"
@@ -210,7 +215,7 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
 
     
     for enemy in notAttackingEnemies:
-      if min([self.distancer.getDistance(enemy, e) for e in edge]) > 5:
+      if min([self.distancer.getDistance(enemy, e) for e in edge]) > self.heuristicWeights['ourAgent_theyCanBeAttackingThreshold']:
         farEnemies.append(enemy)
       else:
         sparringEnemies.append(enemy)
@@ -227,9 +232,8 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
       return hltorAttackMatching, {}
 
     hltKeys = hltorAttackMatching.keys()[:numberDefenders]
-    print "number of defenders we think we need " + str(numberDefenders)
     for key in hltorAttackMatching:
-      if key not in hltKeys and min([self.distancer.getDistance(hltorAttackMatching[key], e) for e in self.inferenceModule.edge])<5:
+      if key not in hltKeys and min([self.distancer.getDistance(hltorAttackMatching[key], e) for e in self.inferenceModule.edge])<self.heuristicWeights['ourAgent_canBeAttackingThreshold']:
         attackMatching[key] =hltorAttackMatching[key]
       else:
         hltMatching[key] = hltorAttackMatching[key]
@@ -237,7 +241,6 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
  
   def getStateValue(self,gameState):
     enemyMLEs =self.inferenceModule.getEnemyMLEs().values()
-    self.displayDistributionsOverSquares(enemyMLEs)
     enemiesAttacking =[self.inferenceModule.isOnOurSide(enemyMLE) for enemyMLE in enemyMLEs]
     attackingEnemies = []
     notAttackingEnemies = []
@@ -275,18 +278,15 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
       attackScore = attackScores[0]
     except:
       attackScore = attackScores
-    print "attack score is " + str(attackScore)
-    print 'hlt score ' + str(hltScore)
-    print 'dscore ' + str(dScore)
-    return hltScore+dScore+(1e-4*attackScore)
+    return self.heuristicWeights['ourAgent_hltWeight'] * hltScore \
+      +self.heuristicWeights['ourAgent_dWeight']*dScore\
+      +self.heuristicWeights['ourAgent_attackWeight']*attackScore
 
   def chooseAction(self, gameState):
     self.updateInference(gameState)
 
-
-
     minimaxMod = MinimaxModule(self)
-    minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.5)
+    minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.1)
 
     bestActions = []
     bestVal = 0

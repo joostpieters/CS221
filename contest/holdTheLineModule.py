@@ -91,9 +91,15 @@ class holdTheLineModule(module.agentModule):
       violation = violation+max(0,ours[i]-theirs[i])**2
     return violation/float(len(ours))
 
+  def averageDistancesToClosestSquares(self, ourP, squares):
+    totalD = 0 
+    for p in ourP:
+      totalD +=min([self.getOurSideMazeDistance(p, square) for square in squares])
+    return totalD/ float(len(ourP))
+ 
   def evaluateBoard(self, gameState,ourIndices,enemyPositions):
     if len(ourIndices)==0:
-      return - 3 * len(enemyPositions)
+      return self.heuristicWeights['hltAgent_lackHLT'] * len(enemyPositions)
 
     ourPositions = [gameState.getAgentPosition(index) for index in ourIndices]
 
@@ -117,7 +123,16 @@ class holdTheLineModule(module.agentModule):
     ourMaxDistance = max(ourDistancesToSquares)
 
     ourAverageDistanceToSquaresViolation = self.avgDistanceToSquares(ourPositions,relevantSquares)
-    return - 2*ourAverageDistanceToSquaresViolation-5*opponentMaxViolation- 2*max(0,opponentSecondMaxViolation)- ourMaxDistance-.5*teamavgMinDistanceToEdgeViolation
+
+    averageInactivity = self.averageDistancesToClosestSquares(ourPositions,relevantSquares)
+
+    return self.heuristicWeights['hltAgent_ourAverageDistanceToSquares']*ourAverageDistanceToSquaresViolation\
+      +self.heuristicWeights['hltAgent_averageInactivity'] * averageInactivity\
+      +self.heuristicWeights['hltAgent_opponentMax']*opponentMaxViolation\
+      +self.heuristicWeights['hltAgent_secondMax'] * opponentSecondMaxViolation\
+      +self.heuristicWeights['hltAgent_zerosecondMax'] *max(0,opponentSecondMaxViolation)\
+      +self.heuristicWeights['hltAgent_ourMaxDistance'] * ourMaxDistance\
+      +self.heuristicWeights['hltAgent_teamavgMinDistanceToEdge']*teamavgMinDistanceToEdgeViolation
 
   def showListofPositions(self, list):
     weights = util.Counter()

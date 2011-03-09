@@ -32,9 +32,9 @@ Rafael Witten\\
 \begin{document}
 \maketitle
 \section{Introduction}
-A popular and relevant field in artificial intelligence is noisy gameplay
-\cite{miik}.  One fun example of this field is Capture the Flag (CTF)
+A popular and relevant field in artificial intelligence is noisy gameplay\cite{miik}.  One fun example of this field is Capture the Flag (CTF)
 Pac-Man.  In this paper, we discuss our implementation of an optimized, flexible agent to play CTF Pac-Man.
+
 
 In our balanced agent, we observed that there are three main branches of
 strategy in CTF Pac-Man: attacking, holding the line, and defending.  The
@@ -60,7 +60,7 @@ impossible to analyze from a theoretical perspective \cite{carlisle}.  To integr
 The first problem we had to solve was that of determining where opposing agents were: the noisy readings from the game state left much to be desired.  For inference of opponent agent positions, we update prior probabilities based not only on our sensor readings, but also based on assumptions in our opponent model, which assumes that the opponent is at all times more likely to be moving towards our food and, therefore, places higher probabilities on positions that get them closer. Additionally, our inference module analyzes our food grid and, whenever one of our pieces of food gets eaten, updates the probabilities of the enemy agent that ate it (whichever agent moved before our agent who is currently analyzing its sensor readings). For obvious reasons, our inference module also handles the two cases in which we know an opponents' location: when we eat them, their probability mass goes back to their start position, and once they are in ``line of sight'' we update their probability distribution accordingly.
 
 \section{Heuristics}
-We thought much more about our choice of heuristics than about their weights, relying instead on automated techniques to choose optimal parameters.  Our choice of heuristics was primarily driven by attempting to think about things in ways similar to humans; in each ``mode" we evaluated the position using heuristics relevant to examining the board from the perspective of the human strategy.
+We thought much more about our choice of heuristics than about their weights, relying instead on automated techniques to choose optimal parameters.  Our choice of heuristics was primarily driven by attempting to think about things in ways similar to humans; in each "mode" - offense, defense, and hold the line - we evaluated the positions using heuristics relevant to examining the board from the perspective of the human strategy.
 
 Hence, we wrote a heuristic function that looked at a board and classified each of the agents, theirs and ours, as being in one of those three states.  To evaluate a position we took a weighted sum of how the three heuristics thought we were doing; thus our heuristic was considering a weighting of how well our defenders were protecting our dots, our attackers were threatening their dots and our hold the line agents were preventing them from crossing onto our side.
 \subsection{Offense}
@@ -68,6 +68,7 @@ Playing offense used a number of heuristics designed to reward agents that could
 
 \subsection{Defense}
 The defensive heuristics that we found most helpful were staying close to our enemies, getting them into single-exit (trapped) scenarios and ensuring that for any piece of food we were closer than our opponents.  A key limitation that we had was that losing sight of attacking enemies could be very dangerous because mutual lack of information is very helpful to attackers.  However, because we were able to deduce an exact location any time food went missing, any agent that was doing serious harm was inherently easy to track.
+
 \subsection{Hold the Line}
 Playing defense against agents who had not crossed onto our side was a very different problem than playing it against agents who had, mostly because trying to eat them was no longer a strong strategy.  Hence we hit upon the idea of separating that type of play into a ``Hold The Line" heuristic.  For the purposes of holding the line, our agents would ``match up'' against usually one but sometimes more opposing agents depending on whether we had some agents attacking.  Our agents mirror their moves, trying to stay closer to all of the squares on the border than the opponents that that agent was ``covering''.  With good inference, as is possible in a 6 agent game, it could become very hard for any opposing agents to cross the border.  
 

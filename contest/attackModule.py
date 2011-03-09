@@ -4,11 +4,14 @@ import minimaxModule
 from minimaxModule import MinimaxModule
 import random
 import time
+import cellLayout
 
 class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
 
   def chooseAction(self, gameState):
+      print("Agent " + str(self.index) + " choosing an action")
       minimaxMod = MinimaxModule(self)
+      minimaxMod.setImpatience(float(self.heuristicWeights['attackModule_percentImpatience'])/100.0)
       minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.1)
       bestActions = []
       bestVal = 0
@@ -24,14 +27,16 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
       return random.choice(bestActions)
 
   def getStateValue(self, gameState):
-      foodDistances = self.distanceToFood(gameState, False) if self.isRed else self.distanceToFood(gameState, True)
+      foodDistances = self.distanceToFood(gameState, not self.isRed)
       nearestFoodVal = self.heuristicWeights['attackModule_nearestFoodCoeff'] * pow(foodDistances[0], self.heuristicWeights['attackModule_nearestFoodPower'])
       totalFoodVal = self.heuristicWeights['attackModule_totalFoodCoeff'] * foodDistances[1]
-      foodCount = self.getFoodCount(gameState, False) if self.isRed else self.getFoodCount(gameState, True)
-      numFoodsVal = self.heuristicWeights['attackModule_foodEatenReward'] * (20 - self.getFoodCount(gameState, False))
+      nearestCapsuleVal = self.heuristicWeights['attackModule_nearestCapsuleCoeff'] * self.nearestCapsule(gameState)
+      foodCount = self.getFoodCount(gameState, not self.isRed)
+      numFoodsVal = self.heuristicWeights['attackModule_foodEatenReward'] * self.getFoodCount(gameState, not self.isRed)
       distanceApartVal = self.heuristicWeights['attackModule_distanceApartReward'] * self.distanceApart(gameState)
       enemyDistanceVal = self.heuristicWeights['attackModule_distanceToEnemies'] * self.distanceToEnemies(gameState)
-      return numFoodsVal - nearestFoodVal - totalFoodVal + distanceApartVal + enemyDistanceVal
+      trappedPenaltyVal = self.heuristicWeights['attackModule_trappedPenaltyCoeff'] *self.trappedPenalty(gameState)
+      return -numFoodsVal - nearestFoodVal - totalFoodVal - nearestCapsuleVal + distanceApartVal + enemyDistanceVal + trappedPenaltyVal
             
   def getFoodCount(self, gameState, red):
       foodCounter = 0
@@ -115,4 +120,52 @@ class AttackModule(agentModule, minimaxModule.MinimaxModuleDelegate):
                   totalDist += self.inferenceModule.distancer.getDistance(ourPos, agentPos)
               
       return totalDist
+  
+  def nearestCapsule(self, gameState):
+      ourPos = gameState.getAgentPosition(self.index)
+      if(ourPos == None):
+          return -1
+      
+      if(self.isRed):
+          capsules = gameState.getBlueCapsules()
+      else:
+          capsules = gameState.getRedCapsules()
+          
+      if(len(capsules) == 0):
+          return 0
+          
+      minDist = 1e10
+      
+      for capsule in capsules:
+          distToCapsule = self.inferenceModule.distancer.getDistance(ourPos, capsule)
+          if(distToCapsule < minDist):
+              minDist = distToCapsule
+      
+      return minDist
+  
+  def trappedPenalty(self, gameState):
+      ourPos = gameState.getAgentPosition(self.index)
+      if(ourPos == None):
+          return -1
+      
+      if(self.isRed):
+          agents = gameState.getBlueTeamIndices()
+      else:
+          agents = gameState.getRedTeamIndices()
+      
+      minVal = 0
+      
+      for agentIndex in agents:
+          if(agentIndex != self.index):
+              agentPos = gameState.getAgentPosition(agentIndex)
+              if(agentPos != None):
+                  canTrap = self.cellLayout.canTrap(agentPos, ourPos, 2)
+                  if(canTrap[0]):
+                      curVal = -10.0/float(len(canTrap[1])) # we are less trapped if it is a bigger space we are trapped in
+                      if(curVal < minVal):
+                          minVal = curVal
+                  
+      return minVal
+      
+      
 

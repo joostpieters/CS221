@@ -186,18 +186,18 @@ class CellLayout:
                 else:
                     return (False, [])
             # if we get here, we are in a two-sided pipe
-            neighbor0 = startNode.getPositions()[0]
+            neighbor0 = startNode.getNeighbors()[0]
             if(len(neighbor0.getPositions()) > 1):
                 return (False, []) # here we are in a loop, so it can always loop away
             neighbor0pos = neighbor0.getPositions()[0]
             trapperDist = self.distancer.getDistance(trapperPos, neighbor0pos)
             trappedDist = self.distancer.getDistance(trappedPos, neighbor0pos)
             if(trapperDist < trappedDist):
-                neighbor = startNode.getPositions()[0]
+                neighbor = startNode.getNeighbors()[0]
             else:
-                neighbor = startNode.getPositions()[1]
+                neighbor = startNode.getNeighbors()[1]
             blocked = set([])
-            canTrap = canTrapRec(neighbor, depthToSearch, blocked)
+            canTrap = self.canTrapRec(neighbor, depthToSearch, blocked)
             if(canTrap):
                 blockList = [s for s in blocked]
                 if(endNode in blocked):
@@ -207,7 +207,7 @@ class CellLayout:
             return (False, [])
         for neighbor in startNode.getNeighbors():
             blocked = set([])
-            canTrap = canTrapRec(neighbor, depthToSearch, blocked)
+            canTrap = self.canTrapRec(neighbor, depthToSearch, blocked)
             if(canTrap):
                 blockList = [s for s in blocked]
                 if(endNode in blocked):
@@ -216,7 +216,7 @@ class CellLayout:
     
         
     def canTrapRec(self, startNode, depthToSearch, blockedNodes):
-        if(startNode in exploredNodes):
+        if(startNode in blockedNodes):
             return True
         if(depthToSearch == 0):
             return False

@@ -1,3 +1,5 @@
+import boardExtractor
+import kMeansClassifier
 from captureAgents import AgentFactory
 from captureAgents import CaptureAgent
 import distanceCalculator
@@ -164,6 +166,32 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
 
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies, self.index)#infModule checks to make sure we don't do this twice
     self.cellLayout = cellLayout.CellLayout(gameState.data.layout, self.distancer) # pass one of these guys around
+    thisLayoutInfo = boardExtractor.vectorize(gameState.data.layout,self.cellLayout)
+    boardValues = knownWeights.ClusteringValues
+    boardValues['thisone'] = thisLayoutInfo
+   
+    clusters, clusterElements =kMeansClassifier.kMeans(boardValues,4)
+
+    ourCluster =None
+    for cluster in clusterElements:
+      if 'thisone' in clusterElements[cluster]:
+        ourCluster =cluster
+    
+    cellmates = list(clusterElements[ourCluster])
+    cellmates.remove('thisone')
+
+    playingWeights = util.Counter()
+    for mate in cellmates:
+      for key in knownWeights.WeightsMap[mate]:
+        playingWeights[key] += knownWeights.WeightsMap[mate][key]
+    
+    playingWeights.divideAll(float(len(cellmates)))
+ 
+    #print playingWeights
+      
+
+#    self.setWeights(playingWeights)
+    self.setWeights(weightsConfig.WeightsMap)
     
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
     self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)

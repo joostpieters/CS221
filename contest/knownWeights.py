@@ -29,23 +29,23 @@ def getWeights(layoutName):
     return WeightsMap[layoutName]
 
 
-ClusteringValues = { "contest01Capture":[20, 20, 20, 20, 20],\
-                     "contest02Capture":[20, 20, 20, 20, 20],\
-                     "contest03Capture":[20, 20, 20, 20, 20],\
-                     "contest04Capture":[20, 20, 20, 20, 20],\
-                     "contest05Capture":[20, 20, 20, 20, 20],\
-                     "contest06Capture":[20, 20, 20, 20, 20],\
-                     "contest07Capture":[20, 20, 20, 20, 20],\
-                     "contest08Capture":[20, 20, 20, 20, 20],\
-                     "contest09Capture":[20, 20, 20, 20, 20],\
-                     "contest10Capture":[20, 20, 20, 20, 20],\
-                     "contest11Capture":[20, 20, 20, 20, 20],\
-                     "contest12Capture":[20, 20, 20, 20, 20],\
-                     "contest13Capture":[20, 20, 20, 20, 20],\
-                     "contest14Capture":[20, 20, 20, 20, 20],\
-                     "contest15Capture":[20, 20, 20, 20, 20],\
-                     "contest16Capture":[20, 20, 20, 20, 20],\
-                     "contest17Capture":[20, 20, 20, 20, 20],\
-                     "contest18Capture":[20, 20, 20, 20, 20],\
-                     "contest19Capture":[20, 20, 20, 20, 20],\
-                     "contest20Capture":[20, 20, 20, 20, 20] }
+ClusteringValues = { "contest01Capture":[34, 18, 286, 60, 0, 326],\
+                     "contest02Capture":[34, 18, 294, 60, 0, 318],\
+                     "contest03Capture":[34, 18, 290, 60, 0, 322],\
+                     "contest04Capture":[34, 18, 282, 60, 0, 330],\
+                     "contest05Capture":[34, 18, 292, 60, 0, 320],\
+                     "contest06Capture":[34, 18, 274, 60, 0, 338],\
+                     "contest07Capture":[34, 18, 276, 60, 0, 336],\
+                     "contest08Capture":[34, 18, 302, 60, 0, 310],\
+                     "contest09Capture":[34, 18, 278, 60, 0, 334],\
+                     "contest10Capture":[34, 18, 274, 60, 0, 338],\
+                     "contest11Capture":[34, 18, 290, 60, 0, 322],\
+                     "contest12Capture":[34, 18, 284, 60, 0, 328],\
+                     "contest13Capture":[34, 18, 290, 60, 0, 322],\
+                     "contest14Capture":[34, 18, 290, 60, 0, 322],\
+                     "contest15Capture":[34, 18, 276, 60, 0, 336],\
+                     "contest16Capture":[34, 18, 280, 60, 0, 332],\
+                     "contest17Capture":[34, 18, 290, 60, 0, 322],\
+                     "contest18Capture":[34, 18, 286, 60, 0, 326],\
+                     "contest19Capture":[34, 18, 292, 60, 0, 320],\
+                     "contest20Capture":[34, 18, 290, 60, 0, 322] }

@@ -171,7 +171,7 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
     boardValues['thisone'] = thisLayoutInfo
    
     clusters, clusterElements =kMeansClassifier.kMeans(boardValues,4)
-    
+
     ourCluster =None
     for cluster in clusterElements:
       if 'thisone' in clusterElements[cluster]:

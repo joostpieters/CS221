@@ -118,10 +118,6 @@ class ourFactory(AgentFactory):
     curAgent = ourAgent(index, timeForComputing=1)
     curAgent.initialize(self.iModel, self.isRed)
     curAgent.setWeights(weightsConfig.WeightsMap)
-    if(self.isRed):
-        curAgent.setWeights(weightsConfig.WeightsMap)
-    else:
-        curAgent.setWeights(knownWeights.getWeights("contest02Capture"))
     return curAgent
 
 def createTeam(firstIndex, secondIndex, isRed):

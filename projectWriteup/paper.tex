@@ -4,6 +4,8 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{algorithmic}
+
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{url}
@@ -12,7 +14,7 @@
 \newtheorem{lemma}{Lemma}
 \newtheorem{theorem}{Theorem}
 
-\title{A Balanced Agent for Capture The Flag Pac-Man}
+\title{An Optimized Agent for Capture The Flag Pac-Man}
 
 \author{
 Alexander L. Churchill\\
@@ -46,12 +48,12 @@ agents from entering our side, and the third attempts to capture opposing
 agents and prevent them from eating our food once they cross over.  We
 built individual modules for each one of these strategies to recommend
 moves.  As in many AI agents, the recommendations of these modules and the
-global decision which module to apply use a combination of minimax and
+global decision of which module to apply use a combination of minimax and
 expectimax, where we look several moves ahead, analyze the strength of our
 position, and act accordingly.
 \\ \\
 Our differentiator and the primary focus of our work was on more advanced
-ways to model opponents and determine the strength of a given game state,
+ways to model opponents and determine the value of a given game state,
 as well as techniques to optimize the weights used to combine those
 parameters into relevant state values.  For inference of opponent agent
 positions, using prior knowledge and the noisy readings we could observe,
@@ -71,26 +73,66 @@ layouts with a variety of different strategies, and combines that
 knowledge effectively when presented with a new game.
 
 \section{Heuristics}
+We thought much more about our choice of heuristics than about their weights, relying instead on automated techniques to choose optimal parameters.  Our choice of heuristics was primarily driven by attempting to think about things in ways similar to humans; in each ``mode" we evaluated the position using heuristics relevant to examining the board from the perspective of the human strategy.
+
+Hence, we wrote a heuristic function that looked at a board and classified each of the agents, theirs and ours, as being in one of those three states.  To evaluate a position we took a weighted sum of how the three heuristics thought we were doing; thus our heuristic was considering a weighting of how well our defenders were protecting our dots, our attackers were threatening their dots and our hold the line agents were preventing them from crossing onto our side.
 \subsection{Offense}
 \subsection{Defense}
+The defensive heuristics that we found most helpful were putting emphasis on staying close to our enemies, getting them into one exit scenarios and ensuring that for any piece of food we were closer than our opponents.  A key limitation that we had was that losing sight of attacking enemies could be very dangerous because lack of information is very helpful to attackers.  However, because we were able to deduce an exact location any time food went missing, any agent that was doing serious harm was inherently easy to track.
 \subsection{Hold the Line}
+Playing defense against agents who had not crossed onto our side was a very different problem than playing it against agents who had, mostly because trying to eat them was no longer a strong strategy.  Hence we hit upon the idea of separating that type of play into a ``Hold The Line" heuristic.  For the purposes of holding the line, our agents would ``match up'' against usually one but sometimes more, if we had some agents attacking, opposing agents and mirror their moves, trying to stay closer to all of the squares on the border than the opponents that that agent was ``covering''.  With good inference, as is possible in a 6 agent game, it could become very hard for any opposing agents to cross the border.  
+
 
 \section{Inference}
-For inference of opponent agent positions, we update prior probabilities based not only on our sensor readings, but also based on assumptions in our opponent model, which assumes that the opponent is at all times more likely to be moving towards our food and, therefore, places higher probabilities on positions that get them closer. Additionally, our inference module analyzes our food grid and, whenever one of our pieces of food gets eaten, updates the probabilities of the enemy agent that ate it (whichever one moved before our agent who's analyzing his sensor readings). We're also very careful in our inference module about cases where we eat an opponent, to update the probabilities to reflect that they're starting over at their initial position 
+For inference of opponent agent positions, we update prior probabilities based not only on our sensor readings, but also based on assumptions in our opponent model, which assumes that the opponent is at all times more likely to be moving towards our food and, therefore, places higher probabilities on positions that get them closer. Additionally, our inference module analyzes our food grid and, whenever one of our pieces of food gets eaten, updates the probabilities of the enemy agent that ate it (whichever agent moved before our agent who' is currently analyzing his sensor readings). We are also careful in our inference module about cases where we eat an opponent, to update the probabilities to reflect that they are starting over at their initial position.
+
 \section{Particle Swarm Optimization}
+The fitness function that we were trying to maximize is, of course, how well an agent plays.  However, evaluating the performance of a strategy is tricky because it requires playing many games to determine a win percentage against some training set of agents and evaluating some measure of fitness.  Evaluating a win percentage is quite noisy and playing a single pacman game is computationally very expensive (as much as 50 minutes, although for training purposes we cutdown thinking time to make games around 5 minutes long).  Hence, when evaluating our agents we got very noisy results.
+
+Part of the appeal of Particle Swarm Optimization (PSO) is that it has in practice been shown to be fairly robust against noise in evaluating an objective function.  PSO was proposed in 1995 by \cite{originalref} for optimizing functions that are continuous but have no other useful structure.  The appeal of PSO over a monte carlo stochastic optimization scheme such as \cite{montecarlo} is that we have a strong suspicion that our true objective function is locally pretty smooth, which fits nicely with local search based methods like PSO.  Additionally using more particles helps us avoid local minima to which genetic algorithms are susceptible as suggested by \cite{geneticalgorithm}.  However, gradient descent is not an option because we cannot compute a first derivative and empirical gradient descent would be noisy because we cannot accurately compute the function at any one point so our empirical gradients would be very inaccurate.
+
 \subsection{Algorithm}
-\subsection{Theoretical Justification}
+We assume that we're given a number of particles to use $N$ and a number of steps to iterate for $k$.  We assume that we can sample uniformly from the feasible state space, $C$, which is chosen to be a rectangle in $\Bbb R^n$, and $C_v$ which is the set of original feasible speeds.  The algorithm that we used is a variant of PSO that we created specifically to cut down on expensive function evaluations and an adaption of previous variants of PSO such as \cite{carlisle}.
+\\
+
+{ \bf Binary PSO}
+\begin{algorithmic}
+\FOR { each particle $i$ in $1,..., N$} 
+  \STATE Draw $x_i \sim C$.
+  \STATE Set $p_i = x_i$.   $p_i$ is the particle's optimal point.
+  \STATE Draw $v_i \sim C_v$.
+\ENDFOR
+\STATE Choose $p$ to be the $\text{winner}_i (p)$, so $p$ are the swarm's best point and value so far.
+
+\FOR {iterations $j$ in $1, ..., k$}
+  \FOR{ each particle $i$ in $1, ..., N$}
+     \STATE Pick random numbers $r_p, r_g \sim U(0,1)$.
+     \STATE Set $v_i = \omega v_i + \omega_p r_p (p_i - x_i) + \omega_g r_g (p -x_i)$.
+     \STATE Set $x_i = x_i + v_i$.
+     \IF {$x_i >_{agent} p_i$}
+       \STATE Set $p_i=x_i$.
+       \IF{$p_i >_{agent} p$}
+         \STATE Set $p = p_i$.
+       \ENDIF
+     \ENDIF
+  \ENDFOR
+\ENDFOR
+
+The parts of the algorithm that have not be fleshed out are the comparisons between points.  The operator $>_{agent}$ means that the agent on the left hand side beat the agent on the right hand side in head to head play in a statistically significant way.  The ``winner" method means selecting the ``best'' element by single matchup elimination tournament, using the $>_{agent}$ operator.
+\end{algorithmic}
+
+
 \subsection{Performance and Results}
 
 \section{$k$-means Clustering for Layouts}
-To solve this problem of disparate weights selected by PSO for different
-layouts, given a layout, we attempted to determine similar layouts for
-which we had already computed training data.  To this end, we used
-$k$-means cluatering.
-\subsection{Methodology}
-\subsection{Performance and Results}
+To solve this problem of disparate weights selected by PSO for different layouts, given a layout, we attempted to determine similar layouts for which we had already computed training data.  The idea was that using the single ``closest'' layout would be a mistake since each of our weights were computed by PSO and were thus subject to noise; adding independent results therefore seems likely to result in better performance.
 
-\section{Overall Results}
+\subsection{Methodology}
+We trained 20 different agents on each of the contest layouts.  Additionally we extracted some features from each board - such as amount of food, size and number of agents.  Then we used k-means clustering to choose a handful of clusters that capture the data pretty well.  The choice of k-means clustering was done because it seemed likely that clustering might help as suggested by \cite{textbook} and we consider k-means clustering to be the default for problems without a prior \cite{kmeans}.  Moreover the the centroid of a set of points is the natural choice for how we would mix a set of heuristics, making k-means seem to match the same prior.
+
+When given a new board, our agents chose the cluster it belongs to and played with the average weights in its cluster.
+
+\subsection{Performance and Results}
 
 \section{Discussion}
 
@@ -101,9 +143,20 @@ $k$-means cluatering.
 
 \bibitem{carlisle} Carlisle, A., Dozier, G. (2001). ``An Off-The-Shelf PSO''.
   {\it Proceedings of the Particle Swarm Optimization Workshop}. pp. 1-6. 
+  
+\bibitem{montecarlo} Hauskrecht, A., Singliar, T. (2003). ``Monte-Carlo optimizations for resource allocation problems in stochastic network systems".
+  
+\bibitem{originalref} Kennedy, J.; Eberhart, R. (1995). ``Particle Swarm Optimization". 
+  {\it Proceedings of IEEE International Conference on Neural Networks. IV.} pp. 1942-1948.
+
+\bibitem{kmeans} MacQueen, J. B. (1967). "Some Methods for classification and Analysis of Multivariate Observations". {\it Proceedings of 5th Berkeley Symposium on Mathematical Statistics and Probability.} University of California Press. pp. 281Ð297.
 
 \bibitem{miik} Miikkulainen, R. (2006) ``Creating Intelligent
   Agents in Games''.  {\it The Bridge}.  National Academy of Engineering.
+  
+\bibitem{geneticalgorithm} Rocha, M., Neves J. (1999) ``Preventing premature convergence to local optima in genetic algorithms via random offspring generation''. {\it IEA/AIE '99 Proceedings of the 12th international conference on Industrial and engineering applications of artificial intelligence and expert system}.
+
+\bibitem{textbook} Russell, S., Norvig, P. (2010) ``Artificial Intelligence''. {\it A Modern Approach Third Edition} , Prentice Hall.
 
 \end{thebibliography}
 

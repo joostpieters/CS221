@@ -165,8 +165,6 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies, self.index)#infModule checks to make sure we don't do this twice
     self.cellLayout = cellLayout.CellLayout(gameState.data.layout, self.distancer) # pass one of these guys around
     
-    curAgent.setWeights(weightsConfig.WeightsMap)
-    
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
     self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
     self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)

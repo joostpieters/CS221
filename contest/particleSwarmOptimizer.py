@@ -66,8 +66,7 @@ class Particle:
                 self.position[key] = max
             if(self.position[key] < min):
                 self.position[key] = min
-    
-    
+                
         
         
         
@@ -84,7 +83,7 @@ class ParticleSwarm:
         self.bestKnown = potentialBests[0].bestKnown.copy()
         if(len(potentialBests) > 1):
             print "Tie in init, so set up default player as best"
-            self.bestKnownVal += 1 # tiebreak, for swarm consistency
+            self.bestKnownVal += 100 # tiebreak, for swarm consistency
             potentialBests[0].bestKnown = optimizableDelegate.getDefaultWeights().copy()
             potentialBests[0].bestKnownVal = self.bestKnownVal
             self.bestKnown = potentialBests[0].bestKnown.copy()
@@ -112,7 +111,10 @@ class ParticleSwarmOptimizer:
       if(self.verbose):
           print("STARTING OPTIMIZE!")
       for i in range(numIterations):
+          curCount = 0
           for particle in self.swarm.particles:
+              curCount += 1
+              if(self.verbose): print("Currently on particle " + str(curCount) +"/" + str(len(self.swarm.particles)) + " in round " + str(i+1) + "/" + str(numIterations))
               particle.updateVelocity()
               particle.updatePosition()
               particleVal = self.fitnessFunction(self, particle)
@@ -214,7 +216,7 @@ class ParticleSwarmOptimizer:
       if(games[0].state.data.score > 0): #Red wins
           return particle.swarm.bestKnownVal
           
-      return particle.swarm.bestKnownVal + 1
+      return particle.swarm.bestKnownVal + 20
       
           
 if __name__ == '__main__':

@@ -27,3 +27,25 @@ WeightsMap = { "contest01Capture":{'hltAgent_opponentMax': 3.1463242810722329, '
 
 def getWeights(layoutName):
     return WeightsMap[layoutName]
+
+
+ClusteringValues = { "contest01Capture":[20, 20, 20, 20, 20],\
+                     "contest02Capture":[20, 20, 20, 20, 20],\
+                     "contest03Capture":[20, 20, 20, 20, 20],\
+                     "contest04Capture":[20, 20, 20, 20, 20],\
+                     "contest05Capture":[20, 20, 20, 20, 20],\
+                     "contest06Capture":[20, 20, 20, 20, 20],\
+                     "contest07Capture":[20, 20, 20, 20, 20],\
+                     "contest08Capture":[20, 20, 20, 20, 20],\
+                     "contest09Capture":[20, 20, 20, 20, 20],\
+                     "contest10Capture":[20, 20, 20, 20, 20],\
+                     "contest11Capture":[20, 20, 20, 20, 20],\
+                     "contest12Capture":[20, 20, 20, 20, 20],\
+                     "contest13Capture":[20, 20, 20, 20, 20],\
+                     "contest14Capture":[20, 20, 20, 20, 20],\
+                     "contest15Capture":[20, 20, 20, 20, 20],\
+                     "contest16Capture":[20, 20, 20, 20, 20],\
+                     "contest17Capture":[20, 20, 20, 20, 20],\
+                     "contest18Capture":[20, 20, 20, 20, 20],\
+                     "contest19Capture":[20, 20, 20, 20, 20],\
+                     "contest20Capture":[20, 20, 20, 20, 20] }

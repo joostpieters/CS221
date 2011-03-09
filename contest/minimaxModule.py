@@ -4,7 +4,7 @@ import time
 from util import Queue
 
 DETECT_CYCLES = True
-PRINTDEBUG = True
+PRINTDEBUG = False
 
 class MinimaxModuleDelegate:
     
@@ -54,10 +54,10 @@ class MinimaxNode:
                       nextState = self.getSuccessor(self.state, action)
                       self.children.append(MinimaxNode(self, nextState, nextIndex, self.delegate, self.ignoreIndices, action))
     
-  def calculateMinimaxValue(self, isRed):
+  def calculateMinimaxValue(self, isRed, impatience):
       if(len(self.children) <= 0):
           return self.value
-      minimaxValues = [child.calculateMinimaxValue(isRed) for child in self.children]
+      minimaxValues = [self.value * impatience + child.calculateMinimaxValue(isRed, impatience) * (1 - impatience) for child in self.children]
       takeMax = True
       if ((isRed and self.index in self.state.getBlueTeamIndices()) or ((not isRed) and self.index in self.state.getRedTeamIndices())):
           takeMax = False
@@ -81,6 +81,12 @@ class MinimaxModule:
   def __init__(self, delegate, ignoreIndices = []):
       self.delegate = delegate
       self.ignoreIndices = ignoreIndices
+      self.impatience = 0
+      
+  # val is the percent by which we average in our current heuristics
+  # while tabulating down the minimax tree (encouraging better moves earlier)
+  def setImpatience(self, val):
+      self.impatience = val
 
   """
   For a given game state, this hands back the action-value minimax calculated
@@ -100,6 +106,8 @@ class MinimaxModule:
       nodesExpanded = 1
       depthExpanded = 0
       
+      minimaxValues = []
+      
       # bfs expanding nodes
       while(True):
           while(not curExpand.isEmpty()):
@@ -115,19 +123,13 @@ class MinimaxModule:
           depthExpanded += 1
           curExpand = nextExpand
           nextExpand = Queue()
+          minimaxValues = []
+          for childNode in rootNode.children:
+              mmaxValue = childNode.calculateMinimaxValue(isRed, self.impatience)
+              minimaxValues.append((childNode.action, mmaxValue))
       
       timeTaken = time.time() - startTime
       if(PRINTDEBUG): print("Expanded " + str(nodesExpanded) + " nodes to a depth of " + str(depthExpanded) + "in " + str(timeTaken) + " seconds.")
       
-      if(PRINTDEBUG): print("Calculating Minimax values...")
-      minimaxStartTime = time.time()
-      minimaxValues = []
-      
-      for childNode in rootNode.children:
-          mmaxValue = childNode.calculateMinimaxValue(isRed)
-          minimaxValues.append((childNode.action, mmaxValue))
-      
-      minimaxTimeTaken = time.time() - minimaxStartTime
-      if(PRINTDEBUG): print("Calculated Minimax in " + str(minimaxTimeTaken) + " seconds.")
       
       return minimaxValues

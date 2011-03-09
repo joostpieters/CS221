@@ -85,7 +85,6 @@ Playing defense against agents who had not crossed onto our side was a very diff
 
 \section{Inference}
 For inference of opponent agent positions, we update prior probabilities based not only on our sensor readings, but also based on assumptions in our opponent model, which assumes that the opponent is at all times more likely to be moving towards our food and, therefore, places higher probabilities on positions that get them closer. Additionally, our inference module analyzes our food grid and, whenever one of our pieces of food gets eaten, updates the probabilities of the enemy agent that ate it (whichever agent moved before our agent who' is currently analyzing his sensor readings). We are also careful in our inference module about cases where we eat an opponent, to update the probabilities to reflect that they are starting over at their initial position.
-
 \section{Particle Swarm Optimization}
 The fitness function that we were trying to maximize is, of course, how well an agent plays.  However, evaluating the performance of a strategy is tricky because it requires playing many games to determine a win percentage against some training set of agents and evaluating some measure of fitness.  Evaluating a win percentage is quite noisy and playing a single pacman game is computationally very expensive (as much as 50 minutes, although for training purposes we cutdown thinking time to make games around 5 minutes long).  Hence, when evaluating our agents we got very noisy results.
 

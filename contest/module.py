@@ -1,5 +1,5 @@
 class agentModule():
-  def __init__(self, friends, enemies, isRed, index, heuristicWeights, inferenceModule, distancer=None):
+  def __init__(self, friends, enemies, isRed, index, heuristicWeights, inferenceModule, cellLayout, distancer=None):
     self.friends=friends
     self.enemies=enemies
     self.isRed=isRed
@@ -7,6 +7,7 @@ class agentModule():
     self.heuristicWeights = heuristicWeights
     self.distancer = distancer
     self.inferenceModule = inferenceModule
+    self.cellLayout = cellLayout
 
   def getOurFood(self,gameState):
     if self.isRed:

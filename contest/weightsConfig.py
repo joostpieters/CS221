@@ -13,12 +13,15 @@ machine optimized.
 # Map of weights we plan to use to determine a policy
 
 WeightsMap = { \
-                'attackModule_foodEatenReward' : 1000, \
-                'attackModule_nearestFoodPower' : 1.5, \
-                'attackModule_nearestFoodCoeff' : 1,  \
+                'attackModule_foodEatenReward' : 4000, \
+                'attackModule_nearestFoodPower' : 1, \
+                'attackModule_nearestFoodCoeff' : 20,  \
+                'attackModule_nearestCapsuleCoeff' : 1,  \
                 'attackModule_totalFoodCoeff'      : 1,  \
-                'attackModule_distanceApartReward' : 5,  \
-                'attackModule_distanceToEnemies'   : 2,  \
+                'attackModule_distanceApartReward' : 2,  \
+                'attackModule_distanceToEnemies'   : 1,  \
+                'attackModule_trappedPenaltyCoeff'   : 10,  \
+                'attackModule_percentImpatience'    : 10, \
 
                 'defenseModule_maxMinOrZero' : -10, \
                 'defenseModule_maxMin' : -5, \
@@ -35,7 +38,7 @@ WeightsMap = { \
                 'ourAgent_theyCanBeAttackingThreshold' : 5, \
 
                 'hltAgent_ourAverageDistanceToSquares' : -2, \
-                'hltAgent_averageInactivity' : -40000, \
+                'hltAgent_averageInactivity' : -10, \
                 'hltAgent_opponentMax' : -5, \
                 'hltAgent_secondMax' : -2, \
                 'hltAgent_zerosecondMax' : -2, \
@@ -48,12 +51,15 @@ WeightsMap = { \
 # as you can for values that will vary widely, such as exponents)
 
 WeightsRangeMap = { \
-                    'attackModule_foodEatenReward'     : (-1000, 1000), \
+                    'attackModule_foodEatenReward'     : (-1000, 4000), \
                     'attackModule_nearestFoodPower'    : (1, 2),  \
                     'attackModule_nearestFoodCoeff'    : (-10, 10),  \
+                    'attackModule_nearestCapsuleCoeff'    : (-10, 10),  \
                     'attackModule_totalFoodCoeff'      : (-10, 10),  \
                     'attackModule_distanceApartReward' : (-10, 10),  \
                     'attackModule_distanceToEnemies'   : (-10, 10),  \
+                    'attackModule_trappedPenaltyCoeff'   : (-100, 100),  \
+                    'attackModule_percentImpatience'   : (0, 100),  \
 
                     'defenseModule_maxMinOrZero' : (-100,100), \
                     'defenseModule_maxMin' : (-100,100), \

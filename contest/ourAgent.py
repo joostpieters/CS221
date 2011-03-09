@@ -16,6 +16,8 @@ from util import nearestPoint
 import particleSwarmOptimizer
 from particleSwarmOptimizer import ParticleSwarmOptimizable
 import weightsConfig
+import knownWeights
+import cellLayout
 
 def zeros(k):
   zeros = ''
@@ -115,6 +117,7 @@ class ourFactory(AgentFactory):
   def getAgent(self, index):
     curAgent = ourAgent(index, timeForComputing=1)
     curAgent.initialize(self.iModel, self.isRed)
+    curAgent.setWeights(weightsConfig.WeightsMap)
     return curAgent
 
 def createTeam(firstIndex, secondIndex, isRed):
@@ -161,10 +164,11 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
       self.enemies = gameState.getRedTeamIndices()
 
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies, self.index)#infModule checks to make sure we don't do this twice
+    self.cellLayout = cellLayout.CellLayout(gameState.data.layout, self.distancer) # pass one of these guys around
     #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
-    self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule,self.distancer)
-    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule,self.distancer)
-    self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule,self.distancer)
+    self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
+    self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
+    self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
     
   def initialize(self, iModel, isRed):
     self.inferenceModule = iModel
@@ -273,11 +277,7 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
     #what do we evaluate
     hltScore = self.holdTheLineModule.evaluateBoard(gameState,hltMatching.keys(), notAttackingEnemies) 
     dScore = self.defenseModule.evaluateBoard(defensiveMatching.values(), self.defenseModule.getOurFood(gameState),attackingEnemies)
-    attackScores = self.attackModule.getStateValue(gameState)  #one could imagine this only considering the attackers
-    try:
-      attackScore = attackScores[0]
-    except:
-      attackScore = attackScores
+    attackScore = self.attackModule.getStateValue(gameState)
     return self.heuristicWeights['ourAgent_hltWeight'] * hltScore \
       +self.heuristicWeights['ourAgent_dWeight']*dScore\
       +self.heuristicWeights['ourAgent_attackWeight']*attackScore
@@ -286,6 +286,7 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
     self.updateInference(gameState)
 
     minimaxMod = MinimaxModule(self)
+    minimaxMod.setImpatience(0.1)
     minimaxVals = minimaxMod.getMinimaxValues(gameState, self.index, self.isRed, 0.1)
 
     bestActions = []

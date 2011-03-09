@@ -54,7 +54,6 @@ class inferenceModule():
 
     self.distancer = distanceCalculator.Distancer(layout)
     self.distancer.getMazeDistances()
-
     self.ourSideDistancer = distanceCalculator.Distancer(ourSideLayout)
     self.ourSideDistancer.getMazeDistances()
 
@@ -157,6 +156,7 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
 
   def registerInitialState(self, gameState):
     CaptureAgent.registerInitialState(self,gameState)
+    self.distancer.getMazeDistances()
     if self.isRed:
       self.friends = gameState.getRedTeamIndices()
       self.enemies = gameState.getBlueTeamIndices()

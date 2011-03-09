@@ -299,10 +299,11 @@ class GameState:
       return configOrPos.pos[0] < width / 2
 
 def halfGrid(grid, red):
-  halfway = grid.width / 2
+  tilewidth = grid.width - 1
+  halfway = tilewidth / 2
   halfgrid = Grid(grid.width, grid.height, False)
   if red:    xrange = range(halfway)
-  else:       xrange = range(halfway, grid.width)
+  else:       xrange = range(halfway, tilewidth)
 
   for y in range(grid.height):
     for x in xrange:
@@ -583,9 +584,9 @@ def readCommand( argv ):
   parser = OptionParser(usageStr)
 
   parser.add_option('-r', '--red', help=default('Red team'),
-                    default='')
+                    default='BaselineAgents')
   parser.add_option('-b', '--blue', help=default('Blue team'),
-                    default='')
+                    default='BaselineAgents')
   parser.add_option('--redOpts', help=default('Options for red team (e.g. first=keys)'),
                     default='')
   parser.add_option('--blueOpts', help=default('Options for blue team (e.g. first=keys)'),
@@ -602,16 +603,13 @@ def readCommand( argv ):
   parser.add_option('-Q', '--super-quiet', action='store_true', dest="super_quiet",
                     help='Same as -q but agent output is also suppressed', default=False)
 
-  parser.add_option('-v', '--verbose', action='store_true', dest="verbose",
-                    help='Include our debug info', default=False)
-
   parser.add_option('-k', '--numPlayers', type='int', dest='numPlayers',
                     help=default('The maximum number of players'), default=4)
   parser.add_option('-z', '--zoom', type='float', dest='zoom',
                     help=default('Zoom in the graphics'), default=1)
   parser.add_option('-i', '--time', type='int', dest='time',
                     help=default('TIME limit of a game in moves'), default=3000, metavar='TIME')
-  parser.add_option('-n', '--numGames', type='int', dest='numGames',
+  parser.add_option('-n', '--numGames', type='int',
                     help=default('Number of games to play'), default=1)
   parser.add_option('-f', '--fixRandomSeed', action='store_true',
                     help='Fixes the random seed to always play the same game', default=False)
@@ -646,9 +644,6 @@ def readCommand( argv ):
     import graphicsDisplay
     graphicsDisplay.FRAME_TIME = 0
     args['display'] = graphicsDisplay.PacmanGraphics(options.zoom, 0, capture=True)
-    
-  if options.verbose:
-    args['verbose'] = True
 
   if options.fixRandomSeed: random.seed('cs188')
 
@@ -663,6 +658,9 @@ def readCommand( argv ):
 
   # Choose a pacman agent
   redArgs, blueArgs = parseAgentArgs(options.redOpts), parseAgentArgs(options.blueOpts)
+  if options.numTraining > 0:
+    redArgs['numTraining'] = options.numTraining
+    blueArgs['numTraining'] = options.numTraining
   nokeyboard = options.textgraphics or options.quiet or options.numTraining > 0
   print '\nRed team %s with %s:' % (options.red, redArgs)
   redAgents = loadAgents(True, options.red, nokeyboard, redArgs)
@@ -711,8 +709,7 @@ def loadAgents(isRed, factory, textgraphics, cmdLineArgs):
     return [None for i in range(3)]
 
 
-  if(factory == ''):
-      factory = factory + "." + conf.AgentFactory
+  factory = factory + "." + conf.AgentFactory
   args = dict(conf.AgentArgs)
   args.update(cmdLineArgs)  # Add command line args with priority
 
@@ -773,14 +770,12 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
 
   rules = CaptureRules()
   games = []
-  otherGames = []
 
   if numTraining > 0:
     print 'Playing %d training games' % numTraining
 
   for i in range( numGames ):
-    print("Playing a game... out of " + str(numGames))
-    beQuiet = i < numTraining or display == None
+    beQuiet = i < numTraining
     if beQuiet:
         # Suppress output and graphics
         import textDisplay
@@ -791,9 +786,7 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
         rules.quiet = False
     g = rules.newGame( layout, agents, gameDisplay, length, muteAgents, catchExceptions )
     g.run()
-    
     if not beQuiet: games.append(g)
-    else: otherGames.append(g)
 
     g.record = None
     if record:
@@ -815,8 +808,6 @@ def runGames( layout, agents, display, length, numGames, record, numTraining, mu
     print 'Red Win Rate:  %d/%d (%.2f)' % ([s > 0 for s in scores].count(True), len(scores), redWinRate)
     print 'Blue Win Rate: %d/%d (%.2f)' % ([s < 0 for s in scores].count(True), len(scores), blueWinRate)
     print 'Record:       ', ', '.join([('Blue', 'Tie', 'Red')[max(0, min(2, 1 + s))] for s in scores])
-    
-  games.extend(otherGames)
   return games
 
 

@@ -91,10 +91,9 @@ class CaptureAgent(Agent):
     self.distancer.getDistance(p1, p2)
     """
     self.red = gameState.isOnRedTeam(self.index)
-    self.distancer = distanceCalculator.Distancer(gameState.data.layout)
-    
+    self.distancer = distanceCalculator.Distancer(gameState.data.layout) 
     # comment this out to forgo maze distance computation and use manhattan distances
-    self.distancer.getMazeDistances()
+    #:self.distancer.getMazeDistances()
     
     import __main__
     if '_display' in dir(__main__):

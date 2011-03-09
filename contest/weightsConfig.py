@@ -17,10 +17,10 @@ WeightsMap = { \
                 'attackModule_nearestFoodPower' : 1, \
                 'attackModule_nearestFoodCoeff' : 20,  \
                 'attackModule_nearestCapsuleCoeff' : 1,  \
-                'attackModule_totalFoodCoeff'      : 1,  \
+                'attackModule_totalFoodCoeff'      : 2,  \
                 'attackModule_distanceApartReward' : 2,  \
-                'attackModule_distanceToEnemies'   : 1,  \
-                'attackModule_trappedPenaltyCoeff'   : 10,  \
+                'attackModule_distanceToEnemies'   : 10,  \
+                'attackModule_trappedPenaltyCoeff'   : 15,  \
                 'attackModule_percentImpatience'    : 10, \
 
                 'defenseModule_maxMinOrZero' : -10, \
@@ -76,7 +76,7 @@ WeightsRangeMap = { \
                     'ourAgent_theyCanBeAttackingThreshold' : (0,20), \
 
                     'hltAgent_ourAverageDistanceToSquares' : (-10,5), \
-                    'hltAgent_averageInactivity' : (-10,5), \
+                    'hltAgent_averageInactivity' : (-15,10), \
                     'hltAgent_opponentMax' : (-10,5), \
                     'hltAgent_secondMax' : (-10,5), \
                     'hltAgent_zerosecondMax' : (-10,5), \

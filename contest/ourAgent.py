@@ -117,7 +117,6 @@ class ourFactory(AgentFactory):
   def getAgent(self, index):
     curAgent = ourAgent(index, timeForComputing=1)
     curAgent.initialize(self.iModel, self.isRed)
-    curAgent.setWeights(weightsConfig.WeightsMap)
     return curAgent
 
 def createTeam(firstIndex, secondIndex, isRed):
@@ -165,7 +164,9 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
 
     self.inferenceModule.initialize(gameState, self.isRed, self.enemies, self.index)#infModule checks to make sure we don't do this twice
     self.cellLayout = cellLayout.CellLayout(gameState.data.layout, self.distancer) # pass one of these guys around
-    #self.agentModule = module.agentModule(self.friends, self.enemies, self.isRed, self.index,self.inferenceModule)
+    
+    curAgent.setWeights(weightsConfig.WeightsMap)
+    
     self.holdTheLineModule = holdTheLineModule.holdTheLineModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
     self.defenseModule = defenseModule.defenseModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
     self.attackModule = attackModule.AttackModule( self.friends, self.enemies, self.isRed,self.index, self.heuristicWeights, self.inferenceModule, self.cellLayout, self.distancer)
@@ -278,9 +279,13 @@ class ourAgent(CaptureAgent,minimaxModule.MinimaxModuleDelegate, ParticleSwarmOp
     hltScore = self.holdTheLineModule.evaluateBoard(gameState,hltMatching.keys(), notAttackingEnemies) 
     dScore = self.defenseModule.evaluateBoard(defensiveMatching.values(), self.defenseModule.getOurFood(gameState),attackingEnemies)
     attackScore = self.attackModule.getStateValue(gameState)
+    
+    countAttackModule = 1
+    if self.index not in attackingMatching.keys():
+        countAttackModule=0
     return self.heuristicWeights['ourAgent_hltWeight'] * hltScore \
       +self.heuristicWeights['ourAgent_dWeight']*dScore\
-      +self.heuristicWeights['ourAgent_attackWeight']*attackScore
+      +countAttackModule*self.heuristicWeights['ourAgent_attackWeight']*attackScore
 
   def chooseAction(self, gameState):
     self.updateInference(gameState)
